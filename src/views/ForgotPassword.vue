@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import ThemeToggle from '../components/ThemeToggle.vue'
-import ParticleBackground from '../components/kBackground.vue'
+import ParticleBackground from '../components/Background.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
