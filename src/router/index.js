@@ -70,6 +70,18 @@ const router = createRouter({
                     component: () => import('../views/accounting/JournalEntries.vue'),
                     meta: { roles: ['admin', 'owner', 'accountant'] }
                 },
+                {
+                    path: 'accounting/fixed-assets',
+                    name: 'fixed-assets',
+                    component: () => import('../views/accounting/FixedAssets.vue'),
+                    meta: { roles: ['admin', 'owner', 'accountant'] }
+                },
+                {
+                    path: 'accounting/bank-reconciliation',
+                    name: 'bank-reconciliation',
+                    component: () => import('../views/accounting/BankReconciliation.vue'),
+                    meta: { roles: ['admin', 'owner', 'accountant'] }
+                },
 
                 // ── Reports ─────────────────────────────
                 {
@@ -97,6 +109,12 @@ const router = createRouter({
                     name: 'users',
                     component: () => import('../views/Users.vue'),
                     meta: { roles: ['admin', 'owner'] }
+                },
+                {
+                    path: 'admin/tenants',
+                    name: 'tenants',
+                    component: () => import('../views/TenantManagement.vue'),
+                    meta: { requiresSuperuser: true }
                 }
             ]
         },
@@ -124,7 +142,12 @@ router.beforeEach((to, from, next) => {
         return next({ name: 'dashboard' })
     }
 
-    // 3. Role-based access check
+    // 3. Superuser check
+    if (to.meta.requiresSuperuser && !authStore.isSuperuser) {
+        return next({ name: 'access-denied' })
+    }
+
+    // 4. Role-based access check
     if (to.meta.roles && to.meta.roles.length > 0) {
         // Superusers bypass all role checks
         if (!authStore.isSuperuser && !authStore.hasRole(to.meta.roles)) {

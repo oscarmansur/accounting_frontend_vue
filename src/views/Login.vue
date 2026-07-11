@@ -4,7 +4,8 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import ThemeToggle from '../components/ThemeToggle.vue'
-import ParticleBackground from '../components/TruckBackground.vue'
+import LanguageSelector from '../components/common/LanguageSelector.vue'
+import ParticleBackground from '../components/Background.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -53,7 +54,8 @@ const handleLogin = async (e) => {
     <ParticleBackground />
     
     <!-- Theme Toggle Button -->
-    <div class="absolute top-4 right-4 z-10">
+    <div class="absolute top-4 right-4 z-20 flex items-center gap-3">
+      <LanguageSelector />
       <ThemeToggle />
     </div>
     

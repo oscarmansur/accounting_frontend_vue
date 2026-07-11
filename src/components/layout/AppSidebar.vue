@@ -146,6 +146,20 @@ const navigation = computed(() => {
           name: t('nav.journalEntries', 'Asientos Contables'), 
           href: '/accounting/entries', 
           routeName: 'journal-entries' 
+        },
+        {
+          id: 'bank-reconciliation',
+          name: t('nav.bankReconciliation', 'Conciliación Bancaria'),
+          href: '/accounting/bank-reconciliation',
+          routeName: 'bank-reconciliation',
+          icon: BookOpenIcon
+        },
+        {
+          id: 'fixed-assets',
+          name: t('nav.fixedAssets', 'Activos Fijos'),
+          href: '/accounting/fixed-assets',
+          routeName: 'fixed-assets',
+          icon: ClipboardDocumentListIcon
         }
       ]
     },
@@ -184,6 +198,17 @@ const navigation = computed(() => {
       href: '/users',
       icon: UsersIcon,
       routeName: 'users'
+    });
+  }
+
+  // Tenants section — superuser only
+  if (authStore.isSuperuser) {
+    items.push({
+      id: 'tenants',
+      name: t('nav.tenants', 'Organizaciones'),
+      href: '/admin/tenants',
+      icon: BuildingOffice2Icon,
+      routeName: 'tenants'
     });
   }
 

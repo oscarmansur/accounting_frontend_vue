@@ -172,14 +172,14 @@ const handleSearch = (query) => {
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('users.management') }}</h1>
         <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
           {{ t('users.totalUsers', { count: users.length }) }}
         </div>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
         <!-- View mode toggle -->
         <div class="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 p-0.5 bg-gray-100 dark:bg-gray-700">
           <button
@@ -210,9 +210,9 @@ const handleSearch = (query) => {
 
         <button
           @click="handleAddUser"
-          class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+          class="flex items-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
         >
-          <PlusIcon class="w-5 h-5 mr-2" />
+          <PlusIcon class="w-5 h-5 mr-1 sm:mr-2" />
           <span>{{ t('users.addUser') }}</span>
         </button>
       </div>
