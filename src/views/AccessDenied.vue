@@ -1,6 +1,9 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
 const router = useRouter()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -11,15 +14,17 @@ const router = useRouter()
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
       </div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Acceso Denegado</h1>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        {{ t('errors.accessDenied') }}
+      </h1>
       <p class="text-gray-500 dark:text-gray-400 mb-6">
-        No tienes los permisos necesarios para acceder a esta sección. Contacta a tu administrador si crees que esto es un error.
+        {{ t('errors.accessDeniedMessage') }}
       </p>
       <button
         @click="router.push({ name: 'dashboard' })"
         class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all"
       >
-        Volver al Panel
+        {{ t('errors.accessDeniedBack') }}
       </button>
     </div>
   </div>

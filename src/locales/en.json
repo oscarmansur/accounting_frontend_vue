@@ -38,6 +38,7 @@
     "balanceSheet": "Balance Sheet",
     "profitAndLoss": "Profit & Loss",
     "trialBalance": "Trial Balance",
+    "agingReport": "Aging Report",
     "users": "Users"
   },
   "common": {
@@ -52,6 +53,7 @@
     "loading": "Loading...",
     "actions": "Actions",
     "status": "Status",
+    "allStatuses": "All statuses",
     "active": "Active",
     "inactive": "Inactive",
     "yes": "Yes",
@@ -136,7 +138,9 @@
     "confirmPasswordPlaceholder": "Repeat password",
     "role": "Role",
     "admin": "Administrator",
-    "user": "User",
+    "user": "Regular User",
+    "superuser": "Superuser",
+    "isSuperuser": "Superuser",
     "status": "Status",
     "userActive": "User Active",
     "passwordMismatch": "Passwords do not match",
@@ -151,7 +155,14 @@
     "deleteError": "Error deleting user:",
     "saveError": "Failed to save user:",
     "tableView": "Table",
-    "cardView": "Cards"
+    "cardView": "Cards",
+    "changePassword": "Change Password",
+    "changePasswordSubtitle": "Change password for {name}",
+    "savingPassword": "Saving Password...",
+    "passwordChangedSuccessfully": "Password updated successfully.",
+    "changePasswordError": "Failed to change password.",
+    "loadingUser": "Loading user info...",
+    "forbiddenAdmin": "You are not authorized to change the password of another administrator."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -194,9 +205,50 @@
     "createTenantError": "Error creating the tenant"
   },
   "accounting": {
+    "templateName": "Template",
+    "origin": "Origin",
+    "system": "System",
+    "organization": "Organization",
+    "templatesManager": "Templates Manager",
+    "activeChart": "Active Chart of Accounts",
+    "createEmptyTemplate": "Create Empty Template",
+    "importFromCSV": "Import from CSV",
+    "newTemplate": "New Template",
+    "editAccounts": "Edit Accounts",
+    "copy": "Copy",
+    "copyTemplate": "Copy Template",
+    "editTemplateAccount": "Edit Template Account",
+    "addTemplateAccount": "Add Account to Template",
+    "code": "Code",
+    "parentCode": "Parent Code",
+    "selectable": "Selectable",
+    "selectableHelp": "Selectable (allows posting transactions)",
+    "addAccount": "Add Account",
+    "initializeChart": "Initialize Chart of Accounts",
+    "onboardingDesc": "This company does not have a configured chart of accounts. Choose one of the methods below to get started:",
+    "commercialTemplate": "Commercial IFRS Template",
+    "commercialTemplateDesc": "Ideal for buying and selling goods. Includes inventory, costs, and sales.",
+    "serviciosTemplate": "Services IFRS Template",
+    "serviciosTemplateDesc": "Ideal for consulting, software, or freelance services. Focused on expenses and public utilities.",
+    "loadTemplate": "Load Template",
+    "uploadCsvTitle": "Import from CSV File",
+    "dragDropPlaceholder": "Click or drag your .csv file here to upload your custom chart",
+    "uploadBtn": "Upload & Import Chart",
+    "fileSelected": "Selected file: {name}",
+    "loadingTemplateMsg": "Loading master template...",
+    "uploadingCsvMsg": "Processing CSV file...",
+    "invalidFileType": "Invalid format. Please select a file with a .csv extension",
+    "accountUpdated": "Account updated successfully.",
     "companyManagement": "Company Management",
     "companyManagementDesc": "Manage the companies within your organization",
     "createCompany": "New Company",
+    "errors": {
+      "fetchCompanies": "Error loading companies.",
+      "createCompany": "Error creating company.",
+      "fetchChartOfAccounts": "Error loading the chart of accounts.",
+      "createAccount": "Error creating the accounting account.",
+      "updateAccount": "Error updating the accounting account."
+    },
     "companyCreated": "Company created successfully with IFRS chart of accounts",
     "legalName": "Legal Name",
     "commercialName": "Commercial Name",
@@ -289,7 +341,20 @@
     "periodDebit": "Debit",
     "periodCredit": "Credit",
     "closingDebit": "Debit",
-    "closingCredit": "Credit"
+    "closingCredit": "Credit",
+    "agingReport": "Aging Report",
+    "agingReportSubtitle": "Accounts receivable and accounts payable analysis",
+    "reportType": "Report Type",
+    "receivable": "Accounts Receivable (Customers)",
+    "payable": "Accounts Payable (Suppliers)",
+    "agingBuckets": {
+      "current": "Current (0-30 days)",
+      "days_31_60": "31-60 days",
+      "days_61_90": "61-90 days",
+      "over_90": "+90 days"
+    },
+    "contact": "Contact",
+    "grandTotal": "Grand Total"
   },
   "context": {
     "switchCompany": "Switch Company",
@@ -366,6 +431,16 @@
     "sortAsc": "Ascending",
     "sortDesc": "Descending"
   },
+  "searchModal": {
+    "title": "Search",
+    "placeholder": "Search users, reports...",
+    "results": "Results",
+    "noResults": "No results found",
+    "tryOtherTerms": "Try with other search terms",
+    "quickAccess": "Quick Access",
+    "pressEsc": "Press {key} to close",
+    "pressEscHtml": "Press <kbd class=\"px-2 py-1 text-xs font-semibold text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded\">ESC</kbd> to close"
+  },
   "assets": {
     "description": "Register and track fixed assets with straight-line depreciation calculation.",
     "createAsset": "Register Asset",
@@ -390,7 +465,12 @@
     "selectDepreciationAccount": "Select accumulated depreciation account...",
     "expenseAccount": "Depreciation Expense Account",
     "selectExpenseAccount": "Select depreciation expense account...",
-    "accountsMappingNote": "Note: Map the accounting ledger accounts affected when depreciating the asset."
+    "accountsMappingNote": "Note: Map the accounting ledger accounts affected when depreciating the asset.",
+    "errors": {
+      "fetch": "Error fetching fixed assets.",
+      "create": "Error registering the fixed asset.",
+      "depreciate": "Error running depreciation."
+    }
   },
   "bank": {
     "description": "Upload bank statement items and auto-match with ledger accounting entries.",
@@ -422,6 +502,29 @@
     "schemaName": "Database Schema",
     "createBtn": "New Organization",
     "createdSuccess": "Organization created successfully. Schema database initialized.",
-    "createTitle": "Create New Organization"
+    "createTitle": "Create New Organization",
+    "errors": {
+      "fetch": "Error loading organizations/tenants.",
+      "create": "Error creating organization."
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your personal information and password",
+    "personalData": "Personal Data",
+    "changePassword": "Change Password",
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "role": "Role in the Organization",
+    "status": "Account Status",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "updateProfile": "Update Profile",
+    "updating": "Updating...",
+    "updatedSuccess": "Profile updated successfully",
+    "passwordSuccess": "Password updated successfully",
+    "passwordMismatch": "Passwords do not match",
+    "passwordLength": "Password must be at least 8 characters long",
+    "fieldsRequired": "All fields are required"
   }
 }

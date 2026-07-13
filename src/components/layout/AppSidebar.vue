@@ -145,7 +145,8 @@ const navigation = computed(() => {
           id: 'journal-entries', 
           name: t('nav.journalEntries', 'Asientos Contables'), 
           href: '/accounting/entries', 
-          routeName: 'journal-entries' 
+          routeName: 'journal-entries',
+          icon: DocumentTextIcon
         },
         {
           id: 'bank-reconciliation',
@@ -185,6 +186,12 @@ const navigation = computed(() => {
           name: t('nav.trialBalance', 'Balance de Comprobación'), 
           href: '/reports/trial-balance', 
           routeName: 'trial-balance' 
+        },
+        { 
+          id: 'aging-report', 
+          name: t('nav.agingReport', 'Antigüedad de Saldos'), 
+          href: '/reports/aging', 
+          routeName: 'aging-report' 
         }
       ]
     }

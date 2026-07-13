@@ -97,6 +97,7 @@ onUnmounted(() => {
       @toggle-sidebar="toggleSidebar"
       @toggle-mobile-menu="toggleMobileMenu"
       @logout="handleLogout"
+      @profile="router.push({ name: 'profile' })"
     />
 
     <!-- Mobile overlay -->

@@ -102,6 +102,12 @@ const router = createRouter({
                     component: () => import('../views/reports/TrialBalance.vue'),
                     meta: { roles: ['admin', 'owner', 'accountant'] }
                 },
+                {
+                    path: 'reports/aging',
+                    name: 'aging-report',
+                    component: () => import('../views/reports/AgingReport.vue'),
+                    meta: { roles: ['admin', 'owner', 'accountant'] }
+                },
 
                 // ── Users (superuser / admin) ───────────
                 {
@@ -109,6 +115,11 @@ const router = createRouter({
                     name: 'users',
                     component: () => import('../views/Users.vue'),
                     meta: { roles: ['admin', 'owner'] }
+                },
+                {
+                    path: 'profile',
+                    name: 'profile',
+                    component: () => import('../views/Profile.vue')
                 },
                 {
                     path: 'admin/tenants',

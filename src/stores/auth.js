@@ -85,6 +85,27 @@ export const useAuthStore = defineStore('auth', {
             localStorage.setItem('user', JSON.stringify(this.user))
         },
 
+        /**
+         * Update the current user profile (PATCH /users/me).
+         */
+        async updateProfile(userData) {
+            this.loading = true
+            this.error = null
+            try {
+                const response = await api.patch('/users/me', userData)
+                console.log('[Auth] Profile updated:', response.data)
+                this.user = response.data
+                localStorage.setItem('user', JSON.stringify(this.user))
+                return this.user
+            } catch (error) {
+                console.error('[Auth] Profile update failed:', error)
+                this.error = error.response?.data?.detail || 'Profile update failed'
+                throw error
+            } finally {
+                this.loading = false
+            }
+        },
+
         async register(userData) {
             this.loading = true
             this.error = null

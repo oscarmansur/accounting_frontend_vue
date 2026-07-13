@@ -16,38 +16,37 @@ const editingUser = ref(null)
 const viewMode = ref('table')
 
 // Define columns for the DataGrid with sorting enabled
-const columns = [
+const columns = computed(() => [
   { 
-    key: 'name', 
-    label: 'User', 
+    key: 'full_name', 
+    label: t('users.fullName'), 
     class: 'min-w-[200px]',
     tdClass: 'py-4',
     sortable: true
   },
-  { key: 'email', label: 'Email', class: 'min-w-[200px]', sortable: true },
-  { key: 'phone_number', label: 'Phone Number', class: 'min-w-[150px]', sortable: true },
+  { key: 'email', label: t('auth.email'), class: 'min-w-[200px]', sortable: true },
   { 
-    key: 'role', 
-    label: 'Role', 
-    class: 'w-24',
+    key: 'is_superuser', 
+    label: t('users.isSuperuser'), 
+    class: 'w-32',
     format: 'role-badge',
     sortable: true
   },
   { 
     key: 'is_active', 
-    label: 'Status', 
+    label: t('common.status'), 
     class: 'w-24',
     format: 'status-badge',
     sortable: true
   },
   { 
     key: 'created_at', 
-    label: 'Created', 
+    label: t('common.created'), 
     class: 'w-32',
     format: 'date',
     sortable: true
   }
-]
+])
 
 onMounted(() => {
   fetchUsers()
@@ -65,10 +64,9 @@ const fetchUsers = async () => {
     // Fallback to mock data if API fails - Generate more users to show pagination
     users.value = Array.from({ length: 25 }, (_, i) => ({
       id: i + 1,
-      name: `${['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'David', 'Emma', 'Frank', 'Grace', 'Henry'][i % 10]} ${['Doe', 'Smith', 'Johnson', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor'][i % 10]}`,
+      full_name: `${['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'David', 'Emma', 'Frank', 'Grace', 'Henry'][i % 10]} ${['Doe', 'Smith', 'Johnson', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor'][i % 10]}`,
       email: `user${i + 1}@example.com`,
-      phone_number: `+1-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
-      role: i % 3 === 0 ? 'admin' : 'user',
+      is_superuser: i % 5 === 0, // 20% superusers
       is_active: i % 4 !== 0, // 75% active, 25% inactive
       created_at: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     }))
@@ -88,7 +86,8 @@ const handleEdit = (user) => {
 }
 
 const handleDelete = async (user) => {
-  if (confirm(t('users.deleteConfirmation', { name: user.name }))) {
+  const nameDisplay = user.full_name || user.email
+  if (confirm(t('users.deleteConfirmation', { name: nameDisplay }))) {
     try {
       await api.delete(`/users/${user.id}`)
       // Remove user from local state
@@ -131,8 +130,8 @@ const handleUserSubmit = async ({ data, isEditing, userId, onComplete }) => {
 }
 
 // Custom formatting functions
-const getRoleBadge = (role) => {
-  return role === 'admin' 
+const getRoleBadge = (isSuperuser) => {
+  return isSuperuser 
     ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
     : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
 }
@@ -228,7 +227,7 @@ const handleSearch = (query) => {
       :show-toolbar="true"
       :items-per-page="10"
       :page-sizes="[5, 10, 25, 50]"
-      :default-sort-column="'name'"
+      :default-sort-column="'full_name'"
       :default-sort-order="'asc'"
       @refresh="fetchUsers"
       @sort-change="handleSortChange"
@@ -261,23 +260,23 @@ const handleSearch = (query) => {
         #{{ value }}
       </template>
       
-      <template #cell-name="{ item }">
+      <template #cell-full_name="{ item }">
         <div class="flex items-center">
           <div class="flex-shrink-0 h-10 w-10">
             <div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-200 font-bold">
-              {{ item.name?.charAt(0).toUpperCase() }}
+              {{ (item.full_name || item.email)?.charAt(0).toUpperCase() }}
             </div>
           </div>
           <div class="ml-4">
-            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ item.name }}</div>
+            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ item.full_name || '-' }}</div>
             <div class="text-sm text-gray-500 dark:text-gray-400">{{ item.email }}</div>
           </div>
         </div>
       </template>
       
-      <template #cell-role="{ value }">
+      <template #cell-is_superuser="{ value }">
         <span :class="getRoleBadge(value)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-          {{ value === 'admin' ? t('users.admin') : t('users.user') }}
+          {{ value ? t('users.superuser') : t('users.user') }}
         </span>
       </template>
       
@@ -308,10 +307,10 @@ const handleSearch = (query) => {
       :show-toolbar="true"
       :items-per-page="12"
       :page-sizes="[6, 12, 24, 48]"
-      :default-sort-column="'name'"
+      :default-sort-column="'full_name'"
       :default-sort-order="'asc'"
       :grid-cols="3"
-      title-key="name"
+      title-key="full_name"
       subtitle-key="email"
       @refresh="fetchUsers"
       @sort-change="handleSortChange"
@@ -321,9 +320,9 @@ const handleSearch = (query) => {
     >
       <template #toolbar-actions></template>
 
-      <template #cell-role="{ value }">
+      <template #cell-is_superuser="{ value }">
         <span :class="getRoleBadge(value)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-          {{ value === 'admin' ? t('users.admin') : t('users.user') }}
+          {{ value ? t('users.superuser') : t('users.user') }}
         </span>
       </template>
 

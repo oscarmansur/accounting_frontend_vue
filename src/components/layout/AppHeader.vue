@@ -72,7 +72,7 @@
           <CompanySwitcher />
           <LanguageSelector />
           <ThemeToggle />
-          <UserDropdown :user="user" @logout="$emit('logout')" />
+          <UserDropdown :user="user" @logout="$emit('logout')" @profile="$emit('profile')" />
         </div>
       </div>
     </div>
@@ -98,5 +98,5 @@ const props = defineProps({
   }
 });
 
-defineEmits(['toggle-sidebar', 'toggle-mobile-menu', 'logout']);
+defineEmits(['toggle-sidebar', 'toggle-mobile-menu', 'logout', 'profile']);
 </script>

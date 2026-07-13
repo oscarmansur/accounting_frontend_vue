@@ -39,13 +39,13 @@ const items = ref([
 const submitting = ref(false)
 
 // ── Columns ─────────────────────────────────────────────
-const columns = [
+const columns = computed(() => [
   { key: 'number', label: '#', sortable: true },
   { key: 'date', label: t('common.date'), sortable: true, format: 'date' },
   { key: 'description', label: t('common.description'), sortable: true },
   { key: 'status', label: t('common.status'), sortable: true },
   { key: 'created_at', label: t('common.created'), sortable: true, format: 'datetime' }
-]
+])
 
 // ── Computed ─────────────────────────────────────────────
 const totalDebit = computed(() =>
@@ -501,7 +501,7 @@ onMounted(() => {
           v-model="statusFilter"
           class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-blue-500"
         >
-          <option value="">Todos los estados</option>
+          <option value="">{{ t('common.allStatuses') }}</option>
           <option value="draft">{{ t('accounting.draft') }}</option>
           <option value="posted">{{ t('accounting.posted') }}</option>
         </select>

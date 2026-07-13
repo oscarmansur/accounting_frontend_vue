@@ -2,11 +2,11 @@
 /**
  * TenantManagement - Manage Tenants (Superuser only).
  */
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import tenantsService from '@/services/tenants'
 import DataGrid from '@/components/common/DataGrid.vue'
-import FormModal from '@/components/common/FormModal.vue'
+import TenantModal from '@/components/TenantModal.vue'
 
 const { t } = useI18n()
 
@@ -17,16 +17,14 @@ const showCreateModal = ref(false)
 const error = ref('')
 const success = ref('')
 
-const columns = [
+const columns = computed(() => [
   { key: 'name', label: t('tenants.name'), sortable: true },
   { key: 'schema_name', label: t('tenants.schemaName'), sortable: true },
   { key: 'is_active', label: t('common.status'), sortable: true },
   { key: 'created_at', label: t('common.created'), sortable: true, format: 'date' }
-]
+])
 
-const tenantFields = [
-  { name: 'name', label: t('tenants.name'), type: 'text', required: true, placeholder: t('tenants.namePlaceholder') }
-]
+// State
 
 const fetchTenants = async () => {
   loading.value = true
@@ -35,14 +33,14 @@ const fetchTenants = async () => {
     const response = await tenantsService.list()
     tenants.value = response.data
   } catch (err) {
-    error.value = err.response?.data?.detail || 'Error al cargar las organizaciones/tenants'
+    error.value = err.response?.data?.detail || t('tenants.errors.fetch')
     console.error(err)
   } finally {
     loading.value = false
   }
 }
 
-const handleCreateTenant = async ({ data }) => {
+const handleCreateTenant = async ({ data, onComplete }) => {
   error.value = ''
   success.value = ''
   try {
@@ -52,8 +50,9 @@ const handleCreateTenant = async ({ data }) => {
     await fetchTenants()
     setTimeout(() => success.value = '', 4000)
   } catch (err) {
-    error.value = err.response?.data?.detail || 'Error al crear la organización'
-    throw err
+    error.value = err.response?.data?.detail || t('tenants.errors.create')
+  } finally {
+    onComplete()
   }
 }
 
@@ -111,12 +110,8 @@ onMounted(fetchTenants)
     </DataGrid>
 
     <!-- Create Tenant Modal -->
-    <FormModal
+    <TenantModal
       v-model="showCreateModal"
-      :title="t('tenants.createTitle')"
-      :fields="tenantFields"
-      :submit-button-text="t('common.create')"
-      :cancel-button-text="t('common.cancel')"
       @submit="handleCreateTenant"
     />
   </div>

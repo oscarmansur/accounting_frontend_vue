@@ -3,10 +3,11 @@
  * Company Management — List and create companies within the current tenant.
  * Only visible for admin / owner roles.
  */
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DataGrid from '@/components/common/DataGrid.vue'
-import FormModal from '@/components/common/FormModal.vue'
+import CompanyModal from '@/components/CompanyModal.vue'
+import FiscalYearModal from '@/components/accounting/FiscalYearModal.vue'
 import { useContextStore } from '@/stores/context'
 import companiesService from '@/services/companies'
 
@@ -21,25 +22,13 @@ const selectedCompanyId = ref(null)
 const error = ref('')
 const success = ref('')
 
-const columns = [
+const columns = computed(() => [
   { key: 'tax_id', label: 'RIF / NIT', sortable: true },
   { key: 'legal_name', label: t('accounting.legalName'), sortable: true },
   { key: 'commercial_name', label: t('accounting.commercialName'), sortable: true },
   { key: 'is_active', label: t('common.status'), sortable: true },
   { key: 'created_at', label: t('common.created'), sortable: true, format: 'date' }
-]
-
-const companyFields = [
-  { name: 'tax_id', label: 'RIF / NIT', type: 'text', required: true, placeholder: 'J-12345678-9' },
-  { name: 'legal_name', label: t('accounting.legalName'), type: 'text', required: true, placeholder: t('accounting.legalNamePlaceholder') },
-  { name: 'commercial_name', label: t('accounting.commercialName'), type: 'text', placeholder: t('accounting.commercialNamePlaceholder') }
-]
-
-const fiscalYearFields = [
-  { name: 'year', label: t('accounting.year'), type: 'text', required: true, placeholder: '2026' },
-  { name: 'start_date', label: t('accounting.startDate'), type: 'text', required: true, placeholder: '2026-01-01' },
-  { name: 'end_date', label: t('accounting.endDate'), type: 'text', required: true, placeholder: '2026-12-31' }
-]
+])
 
 const fetchCompanies = async () => {
   loading.value = true
@@ -49,24 +38,26 @@ const fetchCompanies = async () => {
     // Also refresh context store
     contextStore.companies = response.data
   } catch (err) {
-    error.value = 'Error al cargar empresas'
+    error.value = t('accounting.errors.fetchCompanies')
     console.error(err)
   } finally {
     loading.value = false
   }
 }
 
-const handleCreateCompany = async ({ data }) => {
+const handleCreateCompany = async ({ data, onComplete }) => {
+  error.value = ''
+  success.value = ''
   try {
     await companiesService.create(data)
     success.value = t('accounting.companyCreated')
     showCreateModal.value = false
     await fetchCompanies()
-    // Auto-dismiss success
     setTimeout(() => success.value = '', 4000)
   } catch (err) {
-    error.value = err.response?.data?.detail || 'Error al crear empresa'
-    throw err
+    error.value = err.response?.data?.detail || t('accounting.errors.createCompany')
+  } finally {
+    onComplete()
   }
 }
 
@@ -75,7 +66,7 @@ const openFiscalYearModal = (companyId) => {
   showFiscalYearModal.value = true
 }
 
-const handleCreateFiscalYear = async ({ data }) => {
+const handleCreateFiscalYear = async ({ data, onComplete }) => {
   try {
     await companiesService.createFiscalYear(selectedCompanyId.value, {
       year: parseInt(data.year),
@@ -87,7 +78,8 @@ const handleCreateFiscalYear = async ({ data }) => {
     setTimeout(() => success.value = '', 4000)
   } catch (err) {
     error.value = err.response?.data?.detail || t('accounting.fiscalYearError')
-    throw err
+  } finally {
+    onComplete()
   }
 }
 
@@ -166,22 +158,14 @@ onMounted(fetchCompanies)
     </DataGrid>
 
     <!-- Create Company Modal -->
-    <FormModal
+    <CompanyModal
       v-model="showCreateModal"
-      :title="t('accounting.createCompany', 'Crear Empresa')"
-      :fields="companyFields"
-      :submit-button-text="t('common.create', 'Crear')"
-      :cancel-button-text="t('common.cancel', 'Cancelar')"
       @submit="handleCreateCompany"
     />
 
     <!-- Create Fiscal Year Modal -->
-    <FormModal
+    <FiscalYearModal
       v-model="showFiscalYearModal"
-      :title="t('accounting.createFiscalYear')"
-      :fields="fiscalYearFields"
-      :submit-button-text="t('common.create')"
-      :cancel-button-text="t('common.cancel', 'Cancelar')"
       @submit="handleCreateFiscalYear"
     />
   </div>

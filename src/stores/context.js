@@ -93,7 +93,7 @@ export const useContextStore = defineStore('context', {
 
             this.loadingCompanies = true
             try {
-                const response = await api.get('/companies')
+                const response = await api.get('/companies/')
                 this.companies = response.data
 
                 // Auto-select first company if none selected

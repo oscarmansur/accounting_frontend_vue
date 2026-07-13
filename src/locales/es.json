@@ -38,6 +38,7 @@
     "balanceSheet": "Balance General",
     "profitAndLoss": "Estado de Resultados",
     "trialBalance": "Balance de Comprobación",
+    "agingReport": "Antigüedad de Saldos",
     "users": "Usuarios"
   },
   "common": {
@@ -52,6 +53,7 @@
     "loading": "Cargando...",
     "actions": "Acciones",
     "status": "Estado",
+    "allStatuses": "Todos los estados",
     "active": "Activo",
     "inactive": "Inactivo",
     "yes": "Sí",
@@ -136,7 +138,9 @@
     "confirmPasswordPlaceholder": "Repite la contraseña",
     "role": "Rol",
     "admin": "Administrador",
-    "user": "Usuario",
+    "user": "Usuario Regular",
+    "superuser": "Superusuario",
+    "isSuperuser": "Superusuario",
     "status": "Estado",
     "userActive": "Usuario Activo",
     "passwordMismatch": "Las contraseñas no coinciden",
@@ -151,7 +155,14 @@
     "deleteError": "Error al eliminar usuario:",
     "saveError": "Error al guardar usuario:",
     "tableView": "Tabla",
-    "cardView": "Tarjetas"
+    "cardView": "Tarjetas",
+    "changePassword": "Cambiar Contraseña",
+    "changePasswordSubtitle": "Cambiar contraseña para {name}",
+    "savingPassword": "Guardando Contraseña...",
+    "passwordChangedSuccessfully": "Contraseña actualizada exitosamente.",
+    "changePasswordError": "Fallo al cambiar la contraseña.",
+    "loadingUser": "Cargando información del usuario...",
+    "forbiddenAdmin": "No estás autorizado para cambiar la contraseña de otro administrador."
   },
   "dashboard": {
     "title": "Panel de Control",
@@ -194,9 +205,50 @@
     "createTenantError": "Error al crear el tenant"
   },
   "accounting": {
+    "templateName": "Plantilla",
+    "origin": "Origen",
+    "system": "Sistema",
+    "organization": "Organización",
+    "templatesManager": "Gestor de Plantillas",
+    "activeChart": "Plan de Cuentas Activo",
+    "createEmptyTemplate": "Crear Plantilla Vacía",
+    "importFromCSV": "Importar desde CSV",
+    "newTemplate": "Nueva Plantilla",
+    "editAccounts": "Editar Cuentas",
+    "copy": "Copiar",
+    "copyTemplate": "Copiar Plantilla",
+    "editTemplateAccount": "Editar Cuenta de Plantilla",
+    "addTemplateAccount": "Agregar Cuenta a Plantilla",
+    "code": "Código",
+    "parentCode": "Cód. Padre",
+    "selectable": "Seleccionable",
+    "selectableHelp": "Seleccionable (permite registrar transacciones)",
+    "addAccount": "Agregar Cuenta",
+    "initializeChart": "Inicializar Plan de Cuentas",
+    "onboardingDesc": "Esta empresa no cuenta con un catálogo contable configurado. Elige uno de los siguientes métodos para comenzar:",
+    "commercialTemplate": "Plantilla Comercial NIIF",
+    "commercialTemplateDesc": "Ideal para empresas de compra/venta de mercancía. Incluye inventarios, costos y ventas.",
+    "serviciosTemplate": "Plantilla de Servicios NIIF",
+    "serviciosTemplateDesc": "Ideal para consultorías, software o servicios independientes. Enfocado en gastos y servicios públicos.",
+    "loadTemplate": "Cargar Plantilla",
+    "uploadCsvTitle": "Importar desde Archivo CSV",
+    "dragDropPlaceholder": "Haz clic o arrastra tu archivo .csv aquí para subir tu catálogo personalizado",
+    "uploadBtn": "Subir e Importar Catálogo",
+    "fileSelected": "Archivo seleccionado: {name}",
+    "loadingTemplateMsg": "Cargando plantilla maestro...",
+    "uploadingCsvMsg": "Procesando archivo CSV...",
+    "invalidFileType": "Formato inválido. Por favor selecciona un archivo con extensión .csv",
+    "accountUpdated": "Cuenta actualizada exitosamente.",
     "companyManagement": "Gestión de Empresas",
     "companyManagementDesc": "Administra las empresas dentro de tu organización",
     "createCompany": "Nueva Empresa",
+    "errors": {
+      "fetchCompanies": "Error al cargar empresas.",
+      "createCompany": "Error al crear empresa.",
+      "fetchChartOfAccounts": "Error al cargar el plan de cuentas.",
+      "createAccount": "Error al crear la cuenta contable.",
+      "updateAccount": "Error al actualizar la cuenta contable."
+    },
     "companyCreated": "Empresa creada exitosamente con plan de cuentas NIIF",
     "legalName": "Razón Social",
     "commercialName": "Nombre Comercial",
@@ -289,7 +341,20 @@
     "periodDebit": "Débito",
     "periodCredit": "Crédito",
     "closingDebit": "Débito",
-    "closingCredit": "Crédito"
+    "closingCredit": "Crédito",
+    "agingReport": "Antigüedad de Saldos",
+    "agingReportSubtitle": "Análisis de cuentas por cobrar y por pagar",
+    "reportType": "Tipo de reporte",
+    "receivable": "Cuentas por Cobrar (Clientes)",
+    "payable": "Cuentas por Pagar (Proveedores)",
+    "agingBuckets": {
+      "current": "Al día (0-30 días)",
+      "days_31_60": "31-60 días",
+      "days_61_90": "61-90 días",
+      "over_90": "+90 días"
+    },
+    "contact": "Contacto",
+    "grandTotal": "Gran Total"
   },
   "context": {
     "switchCompany": "Cambiar Empresa",
@@ -366,6 +431,16 @@
     "sortAsc": "Ascendente",
     "sortDesc": "Descendente"
   },
+  "searchModal": {
+    "title": "Buscar",
+    "placeholder": "Buscar usuarios, reportes...",
+    "results": "Resultados",
+    "noResults": "No se encontraron resultados",
+    "tryOtherTerms": "Intenta con otros términos de búsqueda",
+    "quickAccess": "Acceso Rápido",
+    "pressEsc": "Presiona {key} para cerrar",
+    "pressEscHtml": "Presiona <kbd class=\"px-2 py-1 text-xs font-semibold text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded\">ESC</kbd> para cerrar"
+  },
   "assets": {
     "description": "Registro y control de activos fijos, con depreciación lineal automática.",
     "createAsset": "Registrar Activo",
@@ -390,7 +465,12 @@
     "selectDepreciationAccount": "Seleccionar cuenta de depreciación...",
     "expenseAccount": "Cuenta de Gasto de Depreciación",
     "selectExpenseAccount": "Seleccionar cuenta de gasto...",
-    "accountsMappingNote": "Nota: Defina las cuentas contables que se afectarán al depreciar el activo."
+    "accountsMappingNote": "Nota: Defina las cuentas contables que se afectarán al depreciar el activo.",
+    "errors": {
+      "fetch": "Error al obtener activos fijos.",
+      "create": "Error al registrar el activo fijo.",
+      "depreciate": "Error al correr la depreciación."
+    }
   },
   "bank": {
     "description": "Carga de estados de cuenta bancarios y conciliación de partidas automática.",
@@ -422,6 +502,29 @@
     "schemaName": "Esquema DB",
     "createBtn": "Nueva Organización",
     "createdSuccess": "Organización creada exitosamente. El esquema de base de datos ha sido inicializado.",
-    "createTitle": "Crear Nueva Organización"
+    "createTitle": "Crear Nueva Organización",
+    "errors": {
+      "fetch": "Error al cargar las organizaciones/tenants.",
+      "create": "Error al crear la organización."
+    }
+  },
+  "profile": {
+    "title": "Mi Perfil",
+    "subtitle": "Administra tu información personal y contraseña",
+    "personalData": "Datos Personales",
+    "changePassword": "Cambiar Contraseña",
+    "fullName": "Nombre Completo",
+    "email": "Correo Electrónico",
+    "role": "Rol en la Organización",
+    "status": "Estado de la Cuenta",
+    "newPassword": "Nueva Contraseña",
+    "confirmNewPassword": "Confirmar Nueva Contraseña",
+    "updateProfile": "Actualizar Datos",
+    "updating": "Actualizando...",
+    "updatedSuccess": "Perfil actualizado exitosamente",
+    "passwordSuccess": "Contraseña actualizada exitosamente",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "passwordLength": "La contraseña debe tener al menos 8 caracteres",
+    "fieldsRequired": "Todos los campos son requeridos"
   }
 }

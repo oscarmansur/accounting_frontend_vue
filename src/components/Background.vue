@@ -5,275 +5,184 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useDark } from '@vueuse/core'
 
 const canvas = ref(null)
 let ctx = null
 let width = 0
 let height = 0
 let particles = []
-let pulses = []
 let animationId = null
 
-// Detectar modo oscuro
-const isDark = computed(() => document.documentElement.classList.contains('dark'))
+const isDark = useDark({ selector: 'html' })
 
-// Configuración de colores según el tema
-const getColors = () => {
-  if (isDark.value) {
-    // Modo oscuro
-    return {
-      particleCore: '#64748b',
-      particleGlow: '#cbd5e1',
-      line: 'rgba(148, 163, 184, 0.25)',
-      activeLine: 'rgba(34, 211, 238, 0.5)',
-      pulse: '#22d3ee',
-      processingGlow: '#0ea5e9'
-    }
-  } else {
-    // Modo claro
-    return {
-      particleCore: '#94a3b8',
-      particleGlow: '#475569',
-      line: 'rgba(100, 116, 139, 0.2)',
-      activeLine: 'rgba(59, 130, 246, 0.4)',
-      pulse: '#3b82f6',
-      processingGlow: '#2563eb'
-    }
-  }
-}
-
-const config = {
-  particleDensity: 11000,
-  connectionDistance: 160,
-  mouseDistance: 220,
-  baseSpeed: 0.4,
-  pulseChance: 0.0008,
-  get colors() {
-    return getColors()
-  }
-}
-
-const mouse = { x: null, y: null }
-
-class Particle {
+// Class for stardust particles floating horizontally (PS3 stardust style)
+class StardustParticle {
   constructor() {
-    this.x = Math.random() * width
+    this.reset(true)
+  }
+
+  reset(randomX = false) {
+    this.x = randomX ? Math.random() * width : -10
     this.y = Math.random() * height
-    this.vx = (Math.random() - 0.5) * config.baseSpeed
-    this.vy = (Math.random() - 0.5) * config.baseSpeed
-    this.baseSize = Math.random() * 2.5 + 1.5
-    this.currentSize = this.baseSize
-    this.isProcessing = false
-    this.processingTimer = 0
+    this.size = Math.random() * 1.5 + 0.6
+    this.speed = Math.random() * 0.15 + 0.08
+    this.opacity = Math.random() * 0.4 + 0.1
+    this.floatOffset = Math.random() * Math.PI * 2
   }
 
-  triggerProcessing() {
-    this.isProcessing = true
-    this.processingTimer = 1
-  }
-
-  update() {
-    this.x += this.vx
-    this.y += this.vy
-
-    if (this.x < 0 || this.x > width) this.vx *= -1
-    if (this.y < 0 || this.y > height) this.vy *= -1
-
-    if (mouse.x != null && mouse.y != null) {
-      const dx = mouse.x - this.x
-      const dy = mouse.y - this.y
-      const distance = Math.sqrt(dx * dx + dy * dy)
-
-      if (distance < config.mouseDistance) {
-        const force = (config.mouseDistance - distance) / config.mouseDistance
-        const powerForce = Math.pow(force, 2)
-        
-        this.vx += (dx / distance) * powerForce * 0.8
-        this.vy += (dy / distance) * powerForce * 0.8
-      }
-    }
-
-    this.vx *= 0.96
-    this.vy *= 0.96
-
-    const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy)
-    if (speed < config.baseSpeed * 0.2) {
-      this.vx += (Math.random() - 0.5) * 0.08
-      this.vy += (Math.random() - 0.5) * 0.08
-    }
-
-    if (this.processingTimer > 0) {
-      this.processingTimer -= 0.03
-      this.currentSize = this.baseSize + (Math.sin(this.processingTimer * Math.PI) * 3)
-    } else {
-      this.processingTimer = 0
-      this.isProcessing = false
-      this.currentSize = this.baseSize
+  update(time) {
+    this.x += this.speed
+    this.y += Math.sin(time * 0.4 + this.floatOffset) * 0.08
+    if (this.x > width + 10) {
+      this.reset(false)
     }
   }
 
   draw() {
     if (!ctx) return
-
-    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.currentSize * 1.5)
-    
-    if (this.isProcessing) {
-      ctx.shadowBlur = 15 * this.processingTimer
-      ctx.shadowColor = config.colors.processingGlow
-      gradient.addColorStop(0, config.colors.pulse)
-      gradient.addColorStop(1, config.colors.processingGlow)
-    } else {
-      ctx.shadowBlur = 0
-      gradient.addColorStop(0, config.colors.particleGlow)
-      gradient.addColorStop(1, config.colors.particleCore)
-    }
-
+    ctx.save()
+    ctx.fillStyle = isDark.value ? 'rgba(255, 255, 255, ' : 'rgba(79, 70, 229, '
+    ctx.globalAlpha = this.opacity
     ctx.beginPath()
-    ctx.arc(this.x, this.y, this.currentSize, 0, Math.PI * 2)
-    ctx.fillStyle = gradient
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
     ctx.fill()
-    ctx.shadowBlur = 0
+    ctx.restore()
   }
 }
 
-class DataPulse {
-  constructor(startNode, endNode) {
-    this.startNode = startNode
-    this.endNode = endNode
-    this.progress = 0
-    this.speed = 0.03 + Math.random() * 0.04
-    this.active = true
-    this.history = []
+// Draw a smooth PS3 XMB style waving ribbon/wave
+function drawWave(baseY, amplitude, frequency, speed, offset, strokeColor, fillColor) {
+  if (!ctx) return
+
+  const time = Date.now() * 0.001
+  ctx.save()
+
+  ctx.beginPath()
+  const points = []
+  const step = 25
+  for (let x = -20; x <= width + step; x += step) {
+    // Primary sine wave + secondary cosine wave for organic double-bends
+    const wave1 = Math.sin(x * frequency + time * speed + offset) * amplitude
+    const wave2 = Math.cos(x * (frequency * 0.45) - time * (speed * 0.25) + offset * 1.3) * (amplitude * 0.35)
+    const y = baseY + wave1 + wave2
+    points.push({ x, y })
   }
 
-  update() {
-    this.progress += this.speed
-    
-    const currX = this.startNode.x + (this.endNode.x - this.startNode.x) * this.progress
-    const currY = this.startNode.y + (this.endNode.y - this.startNode.y) * this.progress
-    
-    this.history.unshift({ x: currX, y: currY })
-    if (this.history.length > 5) this.history.pop()
-
-    if (this.progress >= 1) {
-      this.active = false
-      this.endNode.triggerProcessing()
-    }
+  ctx.moveTo(points[0].x, points[0].y)
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const xc = (p1.x + p2.x) / 2
+    const yc = (p1.y + p2.y) / 2
+    ctx.quadraticCurveTo(p1.x, p1.y, xc, yc)
   }
 
-  draw() {
-    if (!ctx || !this.active || this.history.length < 1) return
-
-    for (let i = 0; i < this.history.length; i++) {
-      const point = this.history[i]
-      const opacity = 1 - (i / this.history.length)
-      const size = 2.5 * opacity
-      
-      ctx.beginPath()
-      ctx.arc(point.x, point.y, size, 0, Math.PI * 2)
-      ctx.fillStyle = config.colors.pulse
-      ctx.shadowBlur = (i === 0) ? 12 : 2
-      ctx.shadowColor = config.colors.pulse
-      ctx.globalAlpha = opacity
-      ctx.fill()
-    }
-    ctx.globalAlpha = 1
-    ctx.shadowBlur = 0
+  // Draw glowing ribbon top line
+  ctx.strokeStyle = strokeColor
+  ctx.lineWidth = 1.8
+  if (isDark.value) {
+    ctx.shadowBlur = 12
+    ctx.shadowColor = strokeColor
   }
+  ctx.stroke()
+  ctx.shadowBlur = 0 // turn off shadow for gradient fill
+
+  // Draw gradient fill area under the wave down to the bottom
+  ctx.lineTo(width + 40, height)
+  ctx.lineTo(-40, height)
+  ctx.closePath()
+
+  const grad = ctx.createLinearGradient(0, baseY - amplitude, 0, height)
+  grad.addColorStop(0, fillColor)
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
+  ctx.fillStyle = grad
+  ctx.fill()
+
+  ctx.restore()
+}
+
+// Draw shifting background radial gradient
+function drawBackgroundGradient() {
+  if (!ctx) return
+
+  const time = Date.now() * 0.0004
+
+  // Shifting center coordinates in orbit
+  const cx = width / 2 + Math.sin(time * 0.4) * (width * 0.25)
+  const cy = height / 2 + Math.cos(time * 0.25) * (height * 0.18)
+
+  const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(width, height))
+
+  if (isDark.value) {
+    grad.addColorStop(0, '#0a1128')     // Royal Indigo deep blue
+    grad.addColorStop(0.5, '#040612')   // Deep navy slate
+    grad.addColorStop(1, '#010206')     // Almost pitch black
+  } else {
+    grad.addColorStop(0, '#ecfdf5')     // Soft mint
+    grad.addColorStop(0.5, '#e0f2fe')   // Soft sky blue
+    grad.addColorStop(1, '#f8fafc')     // Crisp slate white
+  }
+
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, width, height)
 }
 
 function resize() {
   if (!canvas.value) return
-  
+
   width = canvas.value.width = canvas.value.offsetWidth
   height = canvas.value.height = canvas.value.offsetHeight
+
   initParticles()
 }
 
 function initParticles() {
   particles = []
-  const count = (width * height) / config.particleDensity
+  const count = Math.min(30, Math.floor((width * height) / 50000))
   for (let i = 0; i < count; i++) {
-    particles.push(new Particle())
+    particles.push(new StardustParticle())
   }
 }
 
 function animate() {
   if (!ctx) return
 
-  ctx.clearRect(0, 0, width, height)
+  // 1. Draw shifting background gradient
+  drawBackgroundGradient()
 
-  particles.forEach(p => p.update())
+  const time = Date.now() * 0.001
 
-  // Draw connections
-  ctx.beginPath()
-  for (let i = 0; i < particles.length; i++) {
-    for (let j = i + 1; j < particles.length; j++) {
-      const dx = particles[i].x - particles[j].x
-      const dy = particles[i].y - particles[j].y
-      const dist = Math.sqrt(dx * dx + dy * dy)
-
-      if (dist < config.connectionDistance) {
-        ctx.strokeStyle = config.colors.line
-        ctx.moveTo(particles[i].x, particles[i].y)
-        ctx.lineTo(particles[j].x, particles[j].y)
-        
-        if (Math.random() < config.pulseChance) {
-          pulses.push(new DataPulse(particles[i], particles[j]))
-        }
-      }
-    }
-  }
-  ctx.lineWidth = 1
-  ctx.stroke()
-
-  // Draw mouse connections
-  if (mouse.x != null && mouse.y != null) {
-    ctx.beginPath()
-    ctx.shadowBlur = 8
-    ctx.shadowColor = config.colors.activeLine
-    particles.forEach(p => {
-      const dx = mouse.x - p.x
-      const dy = mouse.y - p.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist < config.mouseDistance) {
-        const opacity = 1 - (dist / config.mouseDistance)
-        ctx.globalAlpha = opacity
-        ctx.moveTo(p.x, p.y)
-        ctx.lineTo(mouse.x, mouse.y)
-      }
-    })
-    ctx.strokeStyle = config.colors.activeLine
-    ctx.lineWidth = 1.2
-    ctx.stroke()
-    ctx.shadowBlur = 0
-    ctx.globalAlpha = 1
+  // 2. Draw 3 distinct overlapping aurora wave ribbons with composite blending
+  if (isDark.value) {
+    ctx.globalCompositeOperation = 'screen'
   }
 
-  // Draw particles
-  particles.forEach(p => p.draw())
+  // Wave 1: Emerald/Teal wave
+  const stroke1 = isDark.value ? 'rgba(52, 211, 153, 0.45)' : 'rgba(5, 150, 105, 0.25)'
+  const fill1 = isDark.value ? 'rgba(16, 185, 129, 0.08)' : 'rgba(209, 250, 229, 0.15)'
+  drawWave(height * 0.42, 60, 0.0016, 0.18, 0, stroke1, fill1)
 
-  // Draw and update pulses
-  pulses = pulses.filter(p => p.active)
-  pulses.forEach(p => {
-    p.update()
+  // Wave 2: Indigo/Purple wave
+  const stroke2 = isDark.value ? 'rgba(129, 140, 248, 0.4)' : 'rgba(79, 70, 229, 0.2)'
+  const fill2 = isDark.value ? 'rgba(79, 70, 229, 0.06)' : 'rgba(224, 231, 255, 0.12)'
+  drawWave(height * 0.50, 80, 0.001, -0.12, Math.PI * 0.5, stroke2, fill2)
+
+  // Wave 3: Cyan/Electric wave
+  const stroke3 = isDark.value ? 'rgba(34, 211, 238, 0.4)' : 'rgba(2, 132, 199, 0.2)'
+  const fill3 = isDark.value ? 'rgba(6, 182, 212, 0.06)' : 'rgba(224, 242, 254, 0.12)'
+  drawWave(height * 0.46, 45, 0.0022, 0.22, Math.PI, stroke3, fill3)
+
+  ctx.globalCompositeOperation = 'source-over'
+
+  // 3. Update and Draw floating stardust particles
+  particles.forEach(p => {
+    p.update(time)
     p.draw()
   })
 
   animationId = requestAnimationFrame(animate)
-}
-
-function handleMouseMove(e) {
-  if (!canvas.value) return
-  const rect = canvas.value.getBoundingClientRect()
-  mouse.x = e.clientX - rect.left
-  mouse.y = e.clientY - rect.top
-}
-
-function handleMouseLeave() {
-  mouse.x = null
-  mouse.y = null
 }
 
 onMounted(() => {
@@ -283,8 +192,6 @@ onMounted(() => {
     animate()
 
     window.addEventListener('resize', resize)
-    canvas.value.addEventListener('mousemove', handleMouseMove)
-    canvas.value.addEventListener('mouseleave', handleMouseLeave)
   }
 })
 
@@ -293,10 +200,6 @@ onUnmounted(() => {
     cancelAnimationFrame(animationId)
   }
   window.removeEventListener('resize', resize)
-  if (canvas.value) {
-    canvas.value.removeEventListener('mousemove', handleMouseMove)
-    canvas.value.removeEventListener('mouseleave', handleMouseLeave)
-  }
 })
 </script>
 
@@ -305,21 +208,10 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1; /* Rendered above the parent container solid background, but below forms (z-10) */
   pointer-events: none;
-  transition: background 0.3s ease;
-}
-
-/* Modo oscuro */
-:global(.dark) .particle-background {
-  background: radial-gradient(circle at bottom left, #1e293b 0%, #0f172a 70%);
-}
-
-/* Modo claro */
-:global(html:not(.dark)) .particle-background {
-  background: radial-gradient(circle at bottom left, #e0e7ff 0%, #f1f5f9 70%);
 }
 
 .particle-canvas {

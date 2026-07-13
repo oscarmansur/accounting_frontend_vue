@@ -6,7 +6,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import assetsService from '@/services/assets'
 import accountingService from '@/services/accounting'
-import AccountSelect from '@/components/accounting/AccountSelect.vue'
+import AssetModal from '@/components/accounting/AssetModal.vue'
 import StatsCard from '@/components/common/StatsCard.vue'
 
 const { t } = useI18n()
@@ -21,18 +21,6 @@ const depreciating = ref(false)
 const showCreateModal = ref(false)
 const error = ref('')
 const success = ref('')
-
-// Form state
-const newAsset = ref({
-  code: '',
-  name: '',
-  purchase_date: new Date().toISOString().split('T')[0],
-  purchase_value: 0,
-  residual_value: 0,
-  useful_life_months: 12,
-  depreciation_account_id: null,
-  expense_account_id: null
-})
 
 // Depreciation run state
 const depreciationDate = ref(new Date().toISOString().split('T')[0])
@@ -51,7 +39,7 @@ const totalBookValue = computed(() => {
 })
 
 // Columns
-const columns = [
+const columns = computed(() => [
   { key: 'code', label: t('common.code') },
   { key: 'name', label: t('common.name') },
   { key: 'purchase_date', label: t('assets.purchaseDate') },
@@ -60,7 +48,7 @@ const columns = [
   { key: 'useful_life_months', label: t('assets.usefulLife') },
   { key: 'accumulated_depreciation', label: t('assets.accumulatedDepr') },
   { key: 'book_value', label: t('assets.bookValue') }
-]
+])
 
 const formatCurrency = (val) => {
   return new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val || 0)
@@ -72,7 +60,7 @@ const fetchAssets = async () => {
     const response = await assetsService.list()
     assets.value = response.data
   } catch (err) {
-    error.value = err.response?.data?.detail || 'Error al obtener activos fijos'
+    error.value = err.response?.data?.detail || t('assets.errors.fetch')
   } finally {
     loading.value = false
   }
@@ -90,37 +78,27 @@ const fetchAccounts = async () => {
   }
 }
 
-const handleCreateAsset = async () => {
+const handleCreateAsset = async ({ data, onComplete }) => {
   submitting.value = true
   error.value = ''
   success.value = ''
   try {
     const payload = {
-      ...newAsset.value,
-      purchase_value: parseFloat(newAsset.value.purchase_value),
-      residual_value: parseFloat(newAsset.value.residual_value),
-      useful_life_months: parseInt(newAsset.value.useful_life_months)
+      ...data,
+      purchase_value: parseFloat(data.purchase_value),
+      residual_value: parseFloat(data.residual_value || 0),
+      useful_life_months: parseInt(data.useful_life_months)
     }
     await assetsService.create(payload)
     success.value = t('assets.createdSuccess')
     showCreateModal.value = false
     await fetchAssets()
-    // Reset form
-    newAsset.value = {
-      code: '',
-      name: '',
-      purchase_date: new Date().toISOString().split('T')[0],
-      purchase_value: 0,
-      residual_value: 0,
-      useful_life_months: 12,
-      depreciation_account_id: null,
-      expense_account_id: null
-    }
     setTimeout(() => success.value = '', 4000)
   } catch (err) {
-    error.value = err.response?.data?.detail || 'Error al registrar el activo fijo'
+    error.value = err.response?.data?.detail || t('assets.errors.create')
   } finally {
     submitting.value = false
+    onComplete()
   }
 }
 
@@ -134,7 +112,7 @@ const handleDepreciate = async () => {
     await fetchAssets()
     setTimeout(() => success.value = '', 5000)
   } catch (err) {
-    error.value = err.response?.data?.detail || 'Error al correr la depreciación'
+    error.value = err.response?.data?.detail || t('assets.errors.depreciate')
   } finally {
     depreciating.value = false
   }
@@ -268,98 +246,10 @@ onMounted(() => {
     </div>
 
     <!-- Custom creation Modal -->
-    <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0 scale-95"
-      enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-95"
-    >
-      <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-black/50 overflow-y-auto">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700 relative flex flex-col max-h-[90vh]">
-          <!-- Title -->
-          <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">{{ t('assets.createAssetTitle') }}</h2>
-            <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl leading-none">&times;</button>
-          </div>
-
-          <!-- Body Scrollable -->
-          <div class="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
-            <!-- Code -->
-            <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-1">
-                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">{{ t('common.code') }} *</label>
-                <input v-model="newAsset.code" type="text" placeholder="EQ-001" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-              </div>
-              <!-- Purchase Date -->
-              <div class="space-y-1">
-                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">{{ t('assets.purchaseDate') }} *</label>
-                <input v-model="newAsset.purchase_date" type="date" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-              </div>
-            </div>
-
-            <!-- Name -->
-            <div class="space-y-1">
-              <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">{{ t('common.name') }} *</label>
-              <input v-model="newAsset.name" type="text" placeholder="Computadora Portátil Dell" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-            </div>
-
-            <!-- Value & Residual & Life -->
-            <div class="grid grid-cols-3 gap-3">
-              <div class="space-y-1">
-                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">{{ t('assets.purchaseValue') }} *</label>
-                <input v-model="newAsset.purchase_value" type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-              </div>
-              <div class="space-y-1">
-                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">{{ t('assets.residualValue') }}</label>
-                <input v-model="newAsset.residual_value" type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-              </div>
-              <div class="space-y-1">
-                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">{{ t('assets.usefulLifeMonths') }} *</label>
-                <input v-model="newAsset.useful_life_months" type="number" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-              </div>
-            </div>
-
-            <!-- Accounts mapping -->
-            <div class="border-t border-gray-100 dark:border-gray-700 pt-3 space-y-3">
-              <p class="text-xs text-gray-400 dark:text-gray-500 italic">{{ t('assets.accountsMappingNote') }}</p>
-              <AccountSelect
-                v-model="newAsset.depreciation_account_id"
-                :accounts="accounts"
-                :label="t('assets.depreciationAccount')"
-                :placeholder="t('assets.selectDepreciationAccount')"
-                only-selectable
-              />
-              <AccountSelect
-                v-model="newAsset.expense_account_id"
-                :accounts="accounts"
-                :label="t('assets.expenseAccount')"
-                :placeholder="t('assets.selectExpenseAccount')"
-                only-selectable
-              />
-            </div>
-          </div>
-
-          <!-- Footer Actions -->
-          <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <button
-              @click="showCreateModal = false"
-              class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              {{ t('common.cancel') }}
-            </button>
-            <button
-              @click="handleCreateAsset"
-              :disabled="submitting || !newAsset.code || !newAsset.name || !newAsset.purchase_value"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
-            >
-              <svg v-if="submitting" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-              {{ t('common.save') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <AssetModal
+      v-model="showCreateModal"
+      :accounts="accounts"
+      @submit="handleCreateAsset"
+    />
   </div>
 </template>

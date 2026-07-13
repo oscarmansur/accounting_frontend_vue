@@ -50,20 +50,21 @@
     </p>
 
     <!-- Dropdown -->
-    <transition
-      enter-active-class="transition ease-out duration-100"
-      enter-from-class="transform opacity-0 scale-95"
-      enter-to-class="transform opacity-100 scale-100"
-      leave-active-class="transition ease-in duration-75"
-      leave-from-class="transform opacity-100 scale-100"
-      leave-to-class="transform opacity-0 scale-95"
-    >
-      <div
-        v-if="isOpen"
-        ref="dropdownElement"
-        class="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-hidden"
-        :class="dropdownPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'"
+    <Teleport to="body">
+      <transition
+        enter-active-class="transition ease-out duration-100"
+        enter-from-class="transform opacity-0 scale-95"
+        enter-to-class="transform opacity-100 scale-100"
+        leave-active-class="transition ease-in duration-75"
+        leave-from-class="transform opacity-100 scale-100"
+        leave-to-class="transform opacity-0 scale-95"
       >
+        <div
+          v-if="isOpen"
+          ref="dropdownElement"
+          class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-hidden"
+          :style="dropdownStyle"
+        >
         <!-- Search Input -->
         <div class="p-2 border-b border-gray-200 dark:border-gray-700">
           <div class="relative">
@@ -143,8 +144,9 @@
             {{ clearText }}
           </button>
         </div>
-      </div>
-    </transition>
+        </div>
+      </transition>
+    </Teleport>
   </div>
 </template>
 
@@ -220,6 +222,7 @@ const selectContainer = ref(null)
 const searchInput = ref(null)
 const dropdownElement = ref(null)
 const dropdownPosition = ref('bottom') // 'top' or 'bottom'
+const dropdownStyle = ref({})
 
 // Get option label
 const getOptionLabel = (option) => {
@@ -315,13 +318,29 @@ const calculateDropdownPosition = () => {
   const viewportHeight = window.innerHeight
   const spaceBelow = viewportHeight - containerRect.bottom
   const spaceAbove = containerRect.top
-  const dropdownHeight = 320 // max-h-80 = 320px
   
-  // Si no hay suficiente espacio abajo pero sí arriba, abrir hacia arriba
+  const el = dropdownElement.value
+  const dropdownHeight = el ? el.getBoundingClientRect().height : 320
+  
+  // Calculate position relative to viewport/document
+  const width = `${containerRect.width}px`
+  const left = `${containerRect.left + window.scrollX}px`
+  
+  let top = ''
   if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
-    dropdownPosition.value = 'top'
+    // Render on top
+    top = `${containerRect.top + window.scrollY - dropdownHeight - 4}px`
   } else {
-    dropdownPosition.value = 'bottom'
+    // Render below
+    top = `${containerRect.bottom + window.scrollY + 4}px`
+  }
+  
+  dropdownStyle.value = {
+    position: 'absolute',
+    width,
+    left,
+    top,
+    zIndex: 9999
   }
 }
 
@@ -365,7 +384,10 @@ const selectHighlightedOption = () => {
 
 // Click outside handler
 const handleClickOutside = (event) => {
-  if (selectContainer.value && !selectContainer.value.contains(event.target)) {
+  const clickOnContainer = selectContainer.value && selectContainer.value.contains(event.target)
+  const clickOnDropdown = dropdownElement.value && dropdownElement.value.contains(event.target)
+  
+  if (!clickOnContainer && !clickOnDropdown) {
     closeDropdown()
   }
 }

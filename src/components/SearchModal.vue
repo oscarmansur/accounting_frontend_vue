@@ -29,7 +29,7 @@
             <!-- Header -->
             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Buscar
+                {{ t('searchModal.title') }}
               </h3>
               <button
                 type="button"
@@ -46,7 +46,7 @@
             <div class="p-4 flex-shrink-0">
               <SearchBar
                 v-model="localSearchQuery"
-                placeholder="Buscar usuarios, reportes..."
+                :placeholder="t('searchModal.placeholder')"
                 :results="[]"
                 :show-dropdown="false"
                 @search="handleSearch"
@@ -59,7 +59,7 @@
               <!-- Search Results -->
               <div v-if="localSearchQuery && results.length > 0" class="px-4 pb-4">
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                  Resultados
+                  {{ t('searchModal.results') }}
                 </p>
                 <div class="space-y-2">
                   <button
@@ -90,15 +90,15 @@
                   <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No se encontraron resultados</p>
-                  <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Intenta con otros términos de búsqueda</p>
+                  <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ t('searchModal.noResults') }}</p>
+                  <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ t('searchModal.tryOtherTerms') }}</p>
                 </div>
               </div>
 
               <!-- Quick Access -->
               <div v-else class="px-4 pb-4">
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                  Acceso Rápido
+                  {{ t('searchModal.quickAccess') }}
                 </p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
@@ -123,9 +123,7 @@
 
             <!-- Footer -->
             <div class="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <p class="text-xs text-gray-500 dark:text-gray-400 text-center">
-                Presiona <kbd class="px-2 py-1 text-xs font-semibold text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded">ESC</kbd> para cerrar
-              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 text-center" v-html="t('searchModal.pressEscHtml')"></p>
             </div>
           </div>
         </Transition>
@@ -136,7 +134,10 @@
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import SearchBar from './SearchBar.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   isOpen: {

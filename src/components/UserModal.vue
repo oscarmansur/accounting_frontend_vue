@@ -28,32 +28,18 @@
 
           <form @submit.prevent="handleSubmit" class="space-y-4">
             <div class="space-y-4">
-              <!-- Fila 1: Nombre y Teléfono -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {{ t('users.fullName') }} <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    v-model="formData.name"
-                    type="text"
-                    required
-                    :placeholder="t('users.fullNamePlaceholder')"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {{ t('users.phoneNumber') }}
-                  </label>
-                  <input
-                    v-model="formData.phoneNumber"
-                    type="tel"
-                    :placeholder="t('users.phoneNumberPlaceholder')"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                </div>
+              <!-- Fila 1: Nombre Completo -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ t('users.fullName') }} <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="formData.full_name"
+                  type="text"
+                  required
+                  :placeholder="t('users.fullNamePlaceholder')"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
               </div>
 
               <!-- Fila 2: Email (ocupa toda la fila) -->
@@ -126,19 +112,19 @@
                 </div>
               </div>
 
-              <!-- Fila 4: Rol y Estado (solo para editar) -->
+              <!-- Fila 4: Rol (is_superuser) y Estado (solo para editar) -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {{ t('users.role') }} <span class="text-red-500">*</span>
                   </label>
                   <select
-                    v-model="formData.role"
+                    v-model="formData.is_superuser"
                     required
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
-                    <option value="admin">{{ t('users.admin') }}</option>
-                    <option value="user">{{ t('users.user') }}</option>
+                    <option :value="true">{{ t('users.superuser') }}</option>
+                    <option :value="false">{{ t('users.user') }}</option>
                   </select>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {{ isEditing ? t('users.canChangeRole') : t('users.selectRole') }}
@@ -217,10 +203,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit'])
 
 const formData = ref({
-  name: '',
+  full_name: '',
   email: '',
-  phoneNumber: '',
-  role: 'admin',
+  is_superuser: false,
   password: '',
   confirmPassword: '',
   isActive: true
@@ -238,10 +223,9 @@ const passwordMismatch = computed(() => {
 
 const resetForm = () => {
   formData.value = {
-    name: '',
+    full_name: '',
     email: '',
-    phoneNumber: '',
-    role: 'admin',
+    is_superuser: false,
     password: '',
     confirmPassword: '',
     isActive: true
@@ -253,10 +237,9 @@ const resetForm = () => {
 watch(() => props.user, (newUser) => {
   if (newUser) {
     formData.value = {
-      name: newUser.name || '',
+      full_name: newUser.full_name || '',
       email: newUser.email || '',
-      phoneNumber: newUser.phone_number || '',
-      role: newUser.role || 'admin',
+      is_superuser: newUser.is_superuser ?? false,
       password: '',
       confirmPassword: '',
       isActive: newUser.is_active ?? true
@@ -283,10 +266,9 @@ const handleSubmit = () => {
   isSubmitting.value = true
 
   const data = {
-    name: formData.value.name.trim(),
+    full_name: formData.value.full_name.trim(),
     email: formData.value.email.trim().toLowerCase(),
-    phone_number: formData.value.phoneNumber.trim(),
-    role: formData.value.role
+    is_superuser: formData.value.is_superuser
   }
 
   // Solo incluir contraseña si es creación

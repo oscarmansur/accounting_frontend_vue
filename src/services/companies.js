@@ -8,14 +8,14 @@ export default {
      * List companies in the current tenant.
      */
     list(skip = 0, limit = 50) {
-        return api.get('/companies', { params: { skip, limit } })
+        return api.get('/companies/', { params: { skip, limit } })
     },
 
     /**
      * Create a new company (auto-initializes NIIF chart of accounts).
      */
     create(data) {
-        return api.post('/companies', data)
+        return api.post('/companies/', data)
     },
 
     /**
