@@ -21,7 +21,10 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isAuthenticated: (state) => !!state.token,
         isSuperuser: (state) => state.user?.is_superuser === true,
-        getUserRole: (state) => state.user?.role || 'viewer',
+        getUserRole: (state) => {
+            if (state.user?.is_superuser) return 'owner'
+            return localStorage.getItem('tenant_role') || 'viewer'
+        },
         userName: (state) => state.user?.full_name || state.user?.email || ''
     },
 

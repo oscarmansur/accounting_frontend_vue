@@ -26,17 +26,47 @@ const passwordSuccess = ref('')
 
 // Computed
 const userInitials = computed(() => {
-  const name = authStore.user?.full_name || authStore.user?.email || 'A'
-  const parts = name.split(' ')
-  if (parts.length >= 2) {
+  const name = authStore.user?.full_name || authStore.user?.email || ''
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2 && parts[0] && parts[1]) {
     return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase()
   }
-  return name.charAt(0).toUpperCase()
+  return name.charAt(0).toUpperCase() || 'A'
 })
 
 const userRole = computed(() => {
-  if (authStore.isSuperuser) return t('common.admin')
-  return authStore.user?.role || 'viewer'
+  const role = authStore.getUserRole?.toLowerCase() || '';
+  if (!role) return t('common.user');
+  
+  switch (role) {
+    case 'owner':
+      return t('users.role_owner');
+    case 'admin':
+      return t('users.role_admin');
+    case 'accountant':
+      return t('users.role_accountant');
+    case 'viewer':
+      return t('users.role_viewer');
+    default:
+      return role.charAt(0).toUpperCase() + role.slice(1);
+  }
+})
+
+const roleClasses = computed(() => {
+  const role = authStore.getUserRole?.toLowerCase() || '';
+  
+  switch (role) {
+    case 'owner':
+      return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium shadow-sm border border-purple-200/10';
+    case 'admin':
+      return 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-medium shadow-sm border border-blue-200/10';
+    case 'accountant':
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/20 dark:border-emerald-800/20 font-medium';
+    case 'viewer':
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200/20 dark:border-gray-700/20 font-medium';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200/20 dark:border-gray-700/20 font-medium';
+  }
 })
 
 // Methods
@@ -127,7 +157,10 @@ const handleChangePassword = async () => {
         <div class="w-full mt-6 border-t border-gray-100 dark:border-gray-700 pt-6 space-y-4 text-left">
           <div class="flex items-center justify-between text-sm">
             <span class="text-gray-500 dark:text-gray-400">{{ t('profile.role') }}</span>
-            <span class="px-2 py-0.5 rounded text-xs font-semibold uppercase bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+            <span 
+              class="px-2 py-0.5 rounded text-xs font-semibold"
+              :class="roleClasses"
+            >
               {{ userRole }}
             </span>
           </div>

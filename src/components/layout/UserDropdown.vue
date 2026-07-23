@@ -112,8 +112,10 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useAuthStore } from '@/stores/auth';
 
 const { t } = useI18n();
+const authStore = useAuthStore();
 
 const props = defineProps({
   user: {
@@ -128,41 +130,51 @@ const isUserMenuOpen = ref(false);
 
 const userName = computed(() => {
   if (!props.user) return t('common.user');
-  return props.user.name || t('common.user');
+  return props.user.full_name || props.user.name || props.user.email || t('common.user');
 });
 
 const userInitials = computed(() => {
   if (!props.user) return t('common.user').charAt(0).toUpperCase();
-  const name = props.user.name || '';
-  const parts = name.split(' ');
-  if (parts.length >= 2) {
+  const name = props.user.full_name || props.user.name || props.user.email || '';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2 && parts[0] && parts[1]) {
     return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
   }
   return name.charAt(0).toUpperCase() || t('common.user').charAt(0).toUpperCase();
 });
 
 const userRole = computed(() => {
-  if (!props.user || !props.user.role) return t('common.user');
-  const role = props.user.role.toLowerCase();
+  const role = authStore.getUserRole?.toLowerCase() || '';
+  if (!role) return t('common.user');
   
-  if (role === 'admin' || role === 'administrator') {
-    return t('common.administrator');
-  } else if (role === 'user' || role === 'usuario') {
-    return t('common.user');
+  switch (role) {
+    case 'owner':
+      return t('users.role_owner');
+    case 'admin':
+      return t('users.role_admin');
+    case 'accountant':
+      return t('users.role_accountant');
+    case 'viewer':
+      return t('users.role_viewer');
+    default:
+      return role.charAt(0).toUpperCase() + role.slice(1);
   }
-  // Capitalize first letter for unknown roles
-  return role.charAt(0).toUpperCase() + role.slice(1);
 });
 
 const roleClasses = computed(() => {
-  const role = props.user?.role?.toLowerCase() || '';
+  const role = authStore.getUserRole?.toLowerCase() || '';
   
-  if (role === 'admin' || role === 'administrador') {
-    return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white';
-  } else if (role === 'user' || role === 'usuario') {
-    return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-  } else {
-    return 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200';
+  switch (role) {
+    case 'owner':
+      return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium shadow-sm border border-purple-200/10';
+    case 'admin':
+      return 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-medium shadow-sm border border-blue-200/10';
+    case 'accountant':
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/20 dark:border-emerald-800/20 font-medium';
+    case 'viewer':
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200/20 dark:border-gray-700/20 font-medium';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200/20 dark:border-gray-700/20 font-medium';
   }
 });
 

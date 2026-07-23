@@ -47,19 +47,35 @@ export const useContextStore = defineStore('context', {
         async loadTenants() {
             this.loadingTenants = true
             try {
-                const response = await api.get('/tenants')
-                this.tenants = response.data
+                const { useAuthStore } = await import('./auth')
+                const authStore = useAuthStore()
+
+                if (authStore.isSuperuser) {
+                    const response = await api.get('/tenants')
+                    this.tenants = response.data
+                } else {
+                    this.tenants = (authStore.user?.tenant_memberships || []).map(m => ({
+                        id: m.tenant.id,
+                        name: m.tenant.name,
+                        is_active: m.tenant.is_active,
+                        role: m.role
+                    }))
+                }
 
                 // Auto-select first tenant if none selected
                 if (!this.currentTenantId && this.tenants.length > 0) {
                     await this.switchTenant(this.tenants[0].id)
                 } else if (this.currentTenantId) {
+                    // Sync active tenant role
+                    const activeMembership = authStore.user?.tenant_memberships?.find(m => m.tenant_id === this.currentTenantId)
+                    this.tenantRole = authStore.isSuperuser ? 'owner' : (activeMembership ? activeMembership.role : 'viewer')
+                    localStorage.setItem('tenant_role', this.tenantRole)
+
                     // Reload companies for current tenant
                     await this.loadCompanies()
                 }
             } catch (error) {
                 console.error('Failed to load tenants:', error)
-                // If 403, the user may not be a superuser – that's OK
                 if (error.response?.status !== 403) {
                     throw error
                 }
@@ -74,6 +90,17 @@ export const useContextStore = defineStore('context', {
         async switchTenant(tenantId) {
             this.currentTenantId = tenantId
             localStorage.setItem('current_tenant_id', tenantId)
+
+            // Resolve and sync role for the new tenant
+            const { useAuthStore } = await import('./auth')
+            const authStore = useAuthStore()
+            if (authStore.isSuperuser) {
+                this.tenantRole = 'owner'
+            } else {
+                const membership = authStore.user?.tenant_memberships?.find(m => m.tenant_id === tenantId)
+                this.tenantRole = membership ? membership.role : 'viewer'
+            }
+            localStorage.setItem('tenant_role', this.tenantRole)
 
             // Clear company selection
             this.currentCompanyId = null

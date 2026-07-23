@@ -43,7 +43,7 @@
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
+        class="fixed left-1/2 -translate-x-1/2 top-16 mt-2 w-[calc(100vw-2rem)] max-w-xs md:absolute md:right-0 md:left-auto md:translate-x-0 md:top-full md:w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
       >
         <!-- Header -->
         <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">

@@ -38,5 +38,16 @@ export default {
         return api.get('/reports/aging', {
             params: { as_of_date: asOfDate, report_type: reportType }
         })
+    },
+
+    /**
+     * Get General Ledger report for a date range and optional account(s).
+     */
+    getGeneralLedger(startDate, endDate, accountIds = null) {
+        const params = { start_date: startDate, end_date: endDate }
+        if (accountIds) {
+            params.account_ids = Array.isArray(accountIds) ? accountIds.join(',') : accountIds
+        }
+        return api.get('/reports/ledger', { params })
     }
 }

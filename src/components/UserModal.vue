@@ -14,7 +14,7 @@
         <div class="relative bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6 shadow-xl">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-              {{ isEditing ? t('users.editUser') : t('users.createUser') }}
+              {{ isEditing ? (mode === 'global' ? t('users.editUser') : t('users.editMember')) : (mode === 'global' ? t('users.createUser') : t('users.addMember')) }}
             </h3>
             <button
               @click="handleClose"
@@ -29,15 +29,15 @@
           <form @submit.prevent="handleSubmit" class="space-y-4">
             <div class="space-y-4">
               <!-- Fila 1: Nombre Completo -->
-              <div>
+              <div v-if="mode === 'global' || !isEditing">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {{ t('users.fullName') }} <span class="text-red-500">*</span>
+                  {{ t('users.fullName') }} <span v-if="mode === 'global'" class="text-red-500">*</span>
                 </label>
                 <input
                   v-model="formData.full_name"
                   type="text"
-                  required
-                  :placeholder="t('users.fullNamePlaceholder')"
+                  :required="mode === 'global'"
+                  :placeholder="mode === 'global' ? t('users.fullNamePlaceholder') : 'Ej: Juan Pérez (Opcional)'"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
@@ -60,8 +60,8 @@
                 </p>
               </div>
 
-              <!-- Fila 3: Contraseña y Confirmar Contraseña (solo para crear) -->
-              <div v-if="!isEditing" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Fila 3: Contraseña y Confirmar Contraseña (solo para crear globalmente) -->
+              <div v-if="mode === 'global' && !isEditing" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {{ t('auth.password') }} <span class="text-red-500">*</span>
@@ -112,13 +112,16 @@
                 </div>
               </div>
 
-              <!-- Fila 4: Rol (is_superuser) y Estado (solo para editar) -->
+              <!-- Fila 4: Rol y Estado -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {{ t('users.role') }} <span class="text-red-500">*</span>
+                    {{ mode === 'global' ? t('users.role') : t('users.roleSelector') }} <span class="text-red-500">*</span>
                   </label>
+                  
+                  <!-- Rol Global -->
                   <select
+                    v-if="mode === 'global'"
                     v-model="formData.is_superuser"
                     required
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -126,12 +129,26 @@
                     <option :value="true">{{ t('users.superuser') }}</option>
                     <option :value="false">{{ t('users.user') }}</option>
                   </select>
+
+                  <!-- Rol Tenant -->
+                  <select
+                    v-else
+                    v-model="formData.role"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="owner">{{ t('users.role_owner') }}</option>
+                    <option value="admin">{{ t('users.role_admin') }}</option>
+                    <option value="accountant">{{ t('users.role_accountant') }}</option>
+                    <option value="viewer">{{ t('users.role_viewer') }}</option>
+                  </select>
+                  
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {{ isEditing ? t('users.canChangeRole') : t('users.selectRole') }}
                   </p>
                 </div>
 
-                <div v-if="isEditing">
+                <div v-if="mode === 'global' && isEditing">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {{ t('users.status') }}
                   </label>
@@ -163,10 +180,10 @@
               </button>
               <button
                 type="submit"
-                :disabled="isSubmitting || (!isEditing && passwordMismatch)"
+                :disabled="isSubmitting || (mode === 'global' && !isEditing && passwordMismatch)"
                 class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                <span v-if="!isSubmitting">{{ isEditing ? t('common.update') : t('users.createUser') }}</span>
+                <span v-if="!isSubmitting">{{ isEditing ? t('common.update') : (mode === 'global' ? t('users.createUser') : t('users.addMember')) }}</span>
                 <span v-else class="flex items-center">
                   <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -197,6 +214,10 @@ const props = defineProps({
   user: {
     type: Object,
     default: null
+  },
+  mode: {
+    type: String,
+    default: 'global' // 'global' or 'tenant'
   }
 })
 
@@ -206,6 +227,7 @@ const formData = ref({
   full_name: '',
   email: '',
   is_superuser: false,
+  role: 'viewer',
   password: '',
   confirmPassword: '',
   isActive: true
@@ -226,6 +248,7 @@ const resetForm = () => {
     full_name: '',
     email: '',
     is_superuser: false,
+    role: 'viewer',
     password: '',
     confirmPassword: '',
     isActive: true
@@ -240,13 +263,13 @@ watch(() => props.user, (newUser) => {
       full_name: newUser.full_name || '',
       email: newUser.email || '',
       is_superuser: newUser.is_superuser ?? false,
+      role: newUser.role || 'viewer',
       password: '',
       confirmPassword: '',
       isActive: newUser.is_active ?? true
     }
     showPassword.value = false
   } else {
-    // Reset form when creating new user
     resetForm()
   }
 }, { immediate: true })
@@ -258,31 +281,41 @@ const handleClose = () => {
 }
 
 const handleSubmit = () => {
-  // Validar contraseñas si es creación
-  if (!isEditing.value && formData.value.password !== formData.value.confirmPassword) {
+  // Validar contraseñas si es creación global
+  if (props.mode === 'global' && !isEditing.value && formData.value.password !== formData.value.confirmPassword) {
     return
   }
 
   isSubmitting.value = true
 
-  const data = {
-    full_name: formData.value.full_name.trim(),
-    email: formData.value.email.trim().toLowerCase(),
-    is_superuser: formData.value.is_superuser
-  }
-
-  // Solo incluir contraseña si es creación
-  if (!isEditing.value) {
-    data.password = formData.value.password
+  const data = {}
+  
+  if (props.mode === 'global') {
+    data.full_name = formData.value.full_name.trim()
+    data.email = formData.value.email.trim().toLowerCase()
+    data.is_superuser = formData.value.is_superuser
+    if (!isEditing.value) {
+      data.password = formData.value.password
+    } else {
+      data.is_active = formData.value.isActive
+    }
   } else {
-    // Solo incluir is_active si es edición
-    data.is_active = formData.value.isActive
+    // Tenant member mode
+    if (isEditing.value) {
+      data.role = formData.value.role
+    } else {
+      data.email = formData.value.email.trim().toLowerCase()
+      data.role = formData.value.role
+      if (formData.value.full_name.trim()) {
+        data.full_name = formData.value.full_name.trim()
+      }
+    }
   }
 
   emit('submit', {
     data,
     isEditing: isEditing.value,
-    userId: props.user?.id,
+    userId: props.user?.id, // En tenant mode esto es el membership_id
     onComplete: () => {
       isSubmitting.value = false
       if (!isEditing.value) {
@@ -292,3 +325,4 @@ const handleSubmit = () => {
   })
 }
 </script>
+

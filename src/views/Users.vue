@@ -2,12 +2,15 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '../services/api'
+import tenantsService from '../services/tenants'
+import { useAuthStore } from '../stores/auth'
 import UserModal from '../components/UserModal.vue'
 import DataGrid from '../components/common/DataGrid.vue'
 import CardGrid from '../components/common/CardGrid.vue'
 import { PlusIcon, PencilIcon, TrashIcon, TableCellsIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 
 const { t } = useI18n()
+const authStore = useAuthStore()
 
 const users = ref([])
 const loading = ref(false)
@@ -15,38 +18,84 @@ const showModal = ref(false)
 const editingUser = ref(null)
 const viewMode = ref('table')
 
+const isSuperuser = computed(() => authStore.isSuperuser)
+const activeTab = ref(localStorage.getItem('active_user_tab') || (isSuperuser.value ? 'global' : 'tenant'))
+
+const setActiveTab = (tab) => {
+  activeTab.value = tab
+  localStorage.setItem('active_user_tab', tab)
+  fetchUsers()
+}
+
+
 // Define columns for the DataGrid with sorting enabled
-const columns = computed(() => [
-  { 
-    key: 'full_name', 
-    label: t('users.fullName'), 
-    class: 'min-w-[200px]',
-    tdClass: 'py-4',
-    sortable: true
-  },
-  { key: 'email', label: t('auth.email'), class: 'min-w-[200px]', sortable: true },
-  { 
-    key: 'is_superuser', 
-    label: t('users.isSuperuser'), 
-    class: 'w-32',
-    format: 'role-badge',
-    sortable: true
-  },
-  { 
-    key: 'is_active', 
-    label: t('common.status'), 
-    class: 'w-24',
-    format: 'status-badge',
-    sortable: true
-  },
-  { 
-    key: 'created_at', 
-    label: t('common.created'), 
-    class: 'w-32',
-    format: 'date',
-    sortable: true
+const columns = computed(() => {
+  if (activeTab.value === 'global') {
+    return [
+      { 
+        key: 'full_name', 
+        label: t('users.fullName'), 
+        class: 'min-w-[200px]',
+        tdClass: 'py-4',
+        sortable: true
+      },
+      { key: 'email', label: t('auth.email'), class: 'min-w-[200px]', sortable: true },
+      { 
+        key: 'is_superuser', 
+        label: t('users.isSuperuser'), 
+        class: 'w-32',
+        format: 'role-badge',
+        sortable: true
+      },
+      { 
+        key: 'is_active', 
+        label: t('common.status'), 
+        class: 'w-24',
+        format: 'status-badge',
+        sortable: true
+      },
+      { 
+        key: 'created_at', 
+        label: t('common.created'), 
+        class: 'w-32',
+        format: 'date',
+        sortable: true
+      }
+    ]
+  } else {
+    return [
+      { 
+        key: 'full_name', 
+        label: t('users.fullName'), 
+        class: 'min-w-[200px]',
+        tdClass: 'py-4',
+        sortable: true
+      },
+      { key: 'email', label: t('auth.email'), class: 'min-w-[200px]', sortable: true },
+      { 
+        key: 'role', 
+        label: t('users.role'), 
+        class: 'w-32',
+        format: 'role-badge',
+        sortable: true
+      },
+      { 
+        key: 'is_active', 
+        label: t('common.status'), 
+        class: 'w-24',
+        format: 'status-badge',
+        sortable: true
+      },
+      { 
+        key: 'created_at', 
+        label: t('common.created'), 
+        class: 'w-32',
+        format: 'date',
+        sortable: true
+      }
+    ]
   }
-])
+})
 
 onMounted(() => {
   fetchUsers()
@@ -55,21 +104,37 @@ onMounted(() => {
 const fetchUsers = async () => {
   loading.value = true
   try {
-    // Fetch all users without pagination by setting a high limit
-    // const response = await api.get('/users?limit=10000')
-    const response = await api.get('/users')
-    users.value = response.data.results || response.data
+    if (activeTab.value === 'global') {
+      const response = await api.get('/users')
+      users.value = response.data.results || response.data
+    } else {
+      const response = await tenantsService.listMembers()
+      const members = response.data.results || response.data
+      users.value = members.map(member => ({
+        id: member.id, // membership ID
+        user_id: member.user_id,
+        full_name: member.user.full_name,
+        email: member.user.email,
+        role: member.role,
+        is_active: member.user.is_active,
+        created_at: member.created_at
+      }))
+    }
   } catch (error) {
     console.error('Error fetching users:', error)
-    // Fallback to mock data if API fails - Generate more users to show pagination
-    users.value = Array.from({ length: 25 }, (_, i) => ({
-      id: i + 1,
-      full_name: `${['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'David', 'Emma', 'Frank', 'Grace', 'Henry'][i % 10]} ${['Doe', 'Smith', 'Johnson', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor'][i % 10]}`,
-      email: `user${i + 1}@example.com`,
-      is_superuser: i % 5 === 0, // 20% superusers
-      is_active: i % 4 !== 0, // 75% active, 25% inactive
-      created_at: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    }))
+    if (activeTab.value === 'global') {
+      // Fallback to mock data if API fails
+      users.value = Array.from({ length: 25 }, (_, i) => ({
+        id: i + 1,
+        full_name: `${['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'David', 'Emma', 'Frank', 'Grace', 'Henry'][i % 10]} ${['Doe', 'Smith', 'Johnson', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor'][i % 10]}`,
+        email: `user${i + 1}@example.com`,
+        is_superuser: i % 5 === 0,
+        is_active: i % 4 !== 0,
+        created_at: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      }))
+    } else {
+      users.value = []
+    }
   } finally {
     loading.value = false
   }
@@ -89,40 +154,75 @@ const handleDelete = async (user) => {
   const nameDisplay = user.full_name || user.email
   if (confirm(t('users.deleteConfirmation', { name: nameDisplay }))) {
     try {
-      await api.delete(`/users/${user.id}`)
-      // Remove user from local state
+      if (activeTab.value === 'global') {
+        await api.delete(`/users/${user.id}`)
+      } else {
+        await tenantsService.removeMember(user.id)
+      }
       users.value = users.value.filter(u => u.id !== user.id)
-      alert(t('users.userDeleted'))
+      alert(activeTab.value === 'global' ? t('users.userDeleted') : t('users.memberDeleted'))
     } catch (error) {
       console.error('Error deleting user:', error)
-      alert(`${t('users.deleteError')} ${error.response?.data?.message || error.message}`)
+      alert(`${t('users.deleteError')} ${error.response?.data?.detail || error.response?.data?.message || error.message}`)
     }
   }
 }
 
 const handleUserSubmit = async ({ data, isEditing, userId, onComplete }) => {
   try {
-    if (isEditing) {
-      // Update existing user
-      const response = await api.patch(`/users/${userId}`, data)
-      // Update user in local state
-      const index = users.value.findIndex(u => u.id === userId)
-      if (index !== -1) {
-        users.value[index] = { ...users.value[index], ...response.data }
+    if (activeTab.value === 'global') {
+      if (isEditing) {
+        // Update existing global user
+        const response = await api.patch(`/users/${userId}`, data)
+        const index = users.value.findIndex(u => u.id === userId)
+        if (index !== -1) {
+          users.value[index] = { ...users.value[index], ...response.data }
+        }
+        alert(t('users.userUpdated'))
+      } else {
+        // Create new global user
+        const response = await api.post('/users', data)
+        users.value.push(response.data)
+        alert(t('users.userCreated'))
       }
-      alert(t('users.userUpdated'))
     } else {
-      // Create new user
-      console.log('Sending user data:', data)
-      const response = await api.post('/users', data)
-      users.value.push(response.data)
-      alert(t('users.userCreated'))
+      // Tenant member mode
+      if (isEditing) {
+        // userId is membershipId in tenant mode
+        const response = await tenantsService.updateMember(userId, data)
+        const updatedMember = response.data
+        const index = users.value.findIndex(u => u.id === userId)
+        if (index !== -1) {
+          users.value[index] = {
+            id: updatedMember.id,
+            user_id: updatedMember.user_id,
+            full_name: updatedMember.user.full_name,
+            email: updatedMember.user.email,
+            role: updatedMember.role,
+            is_active: updatedMember.user.is_active,
+            created_at: updatedMember.created_at
+          }
+        }
+        alert(t('users.memberUpdated'))
+      } else {
+        const response = await tenantsService.addMember(data)
+        const newMember = response.data
+        users.value.push({
+          id: newMember.id,
+          user_id: newMember.user_id,
+          full_name: newMember.user.full_name,
+          email: newMember.user.email,
+          role: newMember.role,
+          is_active: newMember.user.is_active,
+          created_at: newMember.created_at
+        })
+        alert(t('users.memberAdded'))
+      }
     }
     showModal.value = false
   } catch (error) {
     console.error('Error saving user:', error)
-    console.error('Error response data:', error.response?.data)
-    const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message
+    const errorMessage = error.response?.data?.detail || error.response?.data?.message || error.message
     alert(`${t('users.saveError')} ${errorMessage}`)
   } finally {
     onComplete()
@@ -134,6 +234,24 @@ const getRoleBadge = (isSuperuser) => {
   return isSuperuser 
     ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
     : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+}
+
+const getTenantRoleBadge = (role) => {
+  switch (role) {
+    case 'owner':
+      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+    case 'admin':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+    case 'accountant':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+    case 'viewer':
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+  }
+}
+
+const getTenantRoleText = (role) => {
+  return t(`users.role_${role}`, role)
 }
 
 const getStatusBadge = (isActive) => {
@@ -149,22 +267,18 @@ const getStatusText = (isActive) => {
 // Event handlers for DataGrid
 const handleSortChange = (sortInfo) => {
   console.log('Sort changed:', sortInfo)
-  // In a real app, you would re-fetch data with sort parameters
 }
 
 const handlePageChange = (page) => {
   console.log('Page changed:', page)
-  // In a real app, you would re-fetch data with page parameters
 }
 
 const handleItemsPerPageChange = (size) => {
   console.log('Items per page changed:', size)
-  // In a real app, you would re-fetch data with new page size
 }
 
 const handleSearch = (query) => {
   console.log('Search query:', query)
-  // In a real app, you would re-fetch data with search parameters
 }
 </script>
 
@@ -173,7 +287,7 @@ const handleSearch = (query) => {
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('users.management') }}</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ activeTab === 'global' ? t('users.management') : t('users.tenantMembers') }}</h1>
         <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
           {{ t('users.totalUsers', { count: users.length }) }}
         </div>
@@ -209,12 +323,40 @@ const handleSearch = (query) => {
 
         <button
           @click="handleAddUser"
-          class="flex items-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+          class="flex items-center px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all whitespace-nowrap"
         >
           <PlusIcon class="w-5 h-5 mr-1 sm:mr-2" />
-          <span>{{ t('users.addUser') }}</span>
+          <span>{{ activeTab === 'global' ? t('users.addUser') : t('users.addMember') }}</span>
         </button>
       </div>
+    </div>
+
+    <!-- Tab Switcher (Only visible to superusers) -->
+    <div v-if="isSuperuser" class="border-b border-gray-200 dark:border-gray-700">
+      <nav class="-mb-px flex space-x-8">
+        <button
+          @click="setActiveTab('global')"
+          :class="[
+            activeTab === 'global'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400 font-semibold'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300',
+            'whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-all duration-200'
+          ]"
+        >
+          {{ t('users.globalUsers') }}
+        </button>
+        <button
+          @click="setActiveTab('tenant')"
+          :class="[
+            activeTab === 'tenant'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400 font-semibold'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300',
+            'whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-all duration-200'
+          ]"
+        >
+          {{ t('users.tenantMembers') }}
+        </button>
+      </nav>
     </div>
 
     <!-- DataGrid Component (Table View) -->
@@ -223,7 +365,7 @@ const handleSearch = (query) => {
       :data="users"
       :columns="columns"
       :loading="loading"
-      :title="t('navigation.users')"
+      :title="activeTab === 'global' ? t('navigation.users') : t('users.tenantMembers')"
       :show-toolbar="true"
       :items-per-page="10"
       :page-sizes="[5, 10, 25, 50]"
@@ -279,6 +421,12 @@ const handleSearch = (query) => {
           {{ value ? t('users.superuser') : t('users.user') }}
         </span>
       </template>
+
+      <template #cell-role="{ value }">
+        <span :class="getTenantRoleBadge(value)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+          {{ getTenantRoleText(value) }}
+        </span>
+      </template>
       
       <template #cell-is_active="{ value }">
         <span :class="getStatusBadge(value)" class="text-sm font-medium">
@@ -292,7 +440,7 @@ const handleSearch = (query) => {
           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <PlusIcon class="-ml-1 mr-2 h-5 w-5" />
-          {{ t('users.addUser') }}
+          {{ activeTab === 'global' ? t('users.addUser') : t('users.addMember') }}
         </button>
       </template>
     </DataGrid>
@@ -303,7 +451,7 @@ const handleSearch = (query) => {
       :data="users"
       :columns="columns"
       :loading="loading"
-      :title="t('navigation.users')"
+      :title="activeTab === 'global' ? t('navigation.users') : t('users.tenantMembers')"
       :show-toolbar="true"
       :items-per-page="12"
       :page-sizes="[6, 12, 24, 48]"
@@ -323,6 +471,12 @@ const handleSearch = (query) => {
       <template #cell-is_superuser="{ value }">
         <span :class="getRoleBadge(value)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
           {{ value ? t('users.superuser') : t('users.user') }}
+        </span>
+      </template>
+
+      <template #cell-role="{ value }">
+        <span :class="getTenantRoleBadge(value)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+          {{ getTenantRoleText(value) }}
         </span>
       </template>
 
@@ -355,7 +509,7 @@ const handleSearch = (query) => {
           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <PlusIcon class="-ml-1 mr-2 h-5 w-5" />
-          {{ t('users.addUser') }}
+          {{ activeTab === 'global' ? t('users.addUser') : t('users.addMember') }}
         </button>
       </template>
     </CardGrid>
@@ -364,6 +518,7 @@ const handleSearch = (query) => {
     <UserModal
       v-model="showModal"
       :user="editingUser"
+      :mode="activeTab"
       @submit="handleUserSubmit"
     />
   </div>

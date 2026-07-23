@@ -62,12 +62,30 @@ const router = createRouter({
                     component: () => import('../views/config/ChartOfAccounts.vue'),
                     meta: { roles: ['admin', 'owner', 'accountant'] }
                 },
+                {
+                    path: 'config/currency-rates',
+                    name: 'currency-rates',
+                    component: () => import('../views/config/CurrencyRates.vue'),
+                    meta: { roles: ['admin', 'owner', 'accountant'] }
+                },
+                {
+                    path: 'config/subscription',
+                    name: 'subscription',
+                    component: () => import('../views/config/SubscriptionManagement.vue'),
+                    meta: { roles: ['admin', 'owner'] }
+                },
 
                 // ── Accounting ──────────────────────────
                 {
                     path: 'accounting/entries',
                     name: 'journal-entries',
                     component: () => import('../views/accounting/JournalEntries.vue'),
+                    meta: { roles: ['admin', 'owner', 'accountant'] }
+                },
+                {
+                    path: 'accounting/contacts',
+                    name: 'contacts',
+                    component: () => import('../views/accounting/Contacts.vue'),
                     meta: { roles: ['admin', 'owner', 'accountant'] }
                 },
                 {
@@ -106,6 +124,12 @@ const router = createRouter({
                     path: 'reports/aging',
                     name: 'aging-report',
                     component: () => import('../views/reports/AgingReport.vue'),
+                    meta: { roles: ['admin', 'owner', 'accountant'] }
+                },
+                {
+                    path: 'reports/ledger',
+                    name: 'general-ledger',
+                    component: () => import('../views/reports/GeneralLedger.vue'),
                     meta: { roles: ['admin', 'owner', 'accountant'] }
                 },
 

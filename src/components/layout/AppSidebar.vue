@@ -74,7 +74,9 @@ import {
   ClipboardDocumentListIcon,
   ChartBarIcon,
   BuildingOffice2Icon,
-  CalculatorIcon
+  CalculatorIcon,
+  UserGroupIcon,
+  CurrencyDollarIcon
 } from '@heroicons/vue/24/outline';
 
 const { t } = useI18n();
@@ -133,6 +135,19 @@ const navigation = computed(() => {
           name: t('nav.chartOfAccounts', 'Plan de Cuentas'), 
           href: '/config/chart-of-accounts', 
           routeName: 'chart-of-accounts' 
+        },
+        {
+          id: 'currency-rates',
+          name: t('nav.currencyRates', 'Tasas de Cambio'),
+          href: '/config/currency-rates',
+          routeName: 'currency-rates'
+        },
+        {
+          id: 'subscription',
+          name: t('nav.subscription', 'Suscripción'),
+          href: '/config/subscription',
+          routeName: 'subscription',
+          roles: ['admin', 'owner']
         }
       ]
     },
@@ -147,6 +162,13 @@ const navigation = computed(() => {
           href: '/accounting/entries', 
           routeName: 'journal-entries',
           icon: DocumentTextIcon
+        },
+        {
+          id: 'contacts',
+          name: t('nav.contacts', 'Contactos'),
+          href: '/accounting/contacts',
+          routeName: 'contacts',
+          icon: UserGroupIcon
         },
         {
           id: 'bank-reconciliation',
@@ -192,6 +214,12 @@ const navigation = computed(() => {
           name: t('nav.agingReport', 'Antigüedad de Saldos'), 
           href: '/reports/aging', 
           routeName: 'aging-report' 
+        },
+        { 
+          id: 'general-ledger', 
+          name: t('nav.generalLedger', 'Libro Mayor'), 
+          href: '/reports/ledger', 
+          routeName: 'general-ledger' 
         }
       ]
     }

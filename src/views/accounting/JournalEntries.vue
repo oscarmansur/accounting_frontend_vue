@@ -7,6 +7,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DataGrid from '@/components/common/DataGrid.vue'
 import AccountSelect from '@/components/accounting/AccountSelect.vue'
+import JournalEntryDetailModal from '@/components/accounting/JournalEntryDetailModal.vue'
 import entriesService from '@/services/entries'
 import accountingService from '@/services/accounting'
 import { useAuthStore } from '@/stores/auth'
@@ -23,6 +24,14 @@ const statusFilter = ref('')
 const showForm = ref(false)
 const error = ref('')
 const success = ref('')
+
+const selectedEntryId = ref(null)
+const showDetailModal = ref(false)
+
+const viewEntryDetails = (id) => {
+  selectedEntryId.value = id
+  showDetailModal.value = true
+}
 
 // ── Form state ──────────────────────────────────────────
 const formData = ref({
@@ -522,7 +531,14 @@ onMounted(() => {
 
       <!-- Actions -->
       <template #actions="{ item }">
-        <div class="flex items-center gap-2 justify-end">
+        <div class="flex items-center gap-3 justify-end">
+          <button
+            @click="viewEntryDetails(item.id)"
+            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 text-sm font-medium transition-colors"
+            title="Ver detalles"
+          >
+            Ver
+          </button>
           <button
             v-if="item.status === 'draft' && authStore.hasPermission('accountant')"
             @click="postEntry(item.id)"
@@ -542,6 +558,14 @@ onMounted(() => {
         </div>
       </template>
     </DataGrid>
+
+    <!-- Detail Modal -->
+    <JournalEntryDetailModal
+      v-model="showDetailModal"
+      :entry-id="selectedEntryId"
+      @post-success="fetchEntries"
+      @reverse-success="fetchEntries"
+    />
   </div>
 </template>
 
