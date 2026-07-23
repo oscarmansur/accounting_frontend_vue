@@ -157,9 +157,19 @@ export const useContextStore = defineStore('context', {
          * Load fiscal years for the current company.
          */
         async loadFiscalYears() {
-            // Fiscal years endpoint doesn't exist yet in the backend
-            // We'll set a placeholder until it's available
-            this.fiscalYears = []
+            if (!this.currentCompanyId) {
+                this.fiscalYears = []
+                return
+            }
+            try {
+                const res = await api.get(
+                    `/companies/${this.currentCompanyId}/fiscal-years`,
+                )
+                this.fiscalYears = res.data
+            } catch {
+                // Endpoint may not be available yet — degrade gracefully
+                this.fiscalYears = []
+            }
         },
 
         /**

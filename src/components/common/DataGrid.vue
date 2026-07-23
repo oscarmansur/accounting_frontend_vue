@@ -262,7 +262,7 @@
               class="block w-20 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-1.5 pl-3 pr-8 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               @change="handleItemsPerPageChange"
             >
-              <option v-for="size in pageSizes" :key="size" :value="size">{{ size }}</option>
+              <option v-for="size in selectPageSizes" :key="size" :value="size">{{ size }}</option>
             </select>
           </div>
           
@@ -427,6 +427,10 @@ const props = defineProps({
     type: Array,
     default: () => [5, 10, 25, 50, 100]
   },
+  currentPage: {
+    type: Number,
+    default: 1
+  },
   
   // Selection
   selectable: {
@@ -587,9 +591,12 @@ const sortedData = computed(() => {
   
   if (!sortColumn.value) return filteredData.value
   
+  const activeColumn = props.columns.find(col => col.key === sortColumn.value)
+  const sortKey = activeColumn?.sortKey || sortColumn.value
+  
   return [...filteredData.value].sort((a, b) => {
-    const aValue = getValue(a, sortColumn.value)
-    const bValue = getValue(b, sortColumn.value)
+    const aValue = getValue(a, sortKey)
+    const bValue = getValue(b, sortKey)
     
     // Handle null/undefined values
     if (aValue == null && bValue == null) return 0
@@ -614,6 +621,16 @@ const totalPages = computed(() => {
   return Math.ceil(sortedData.value.length / localItemsPerPage.value)
 })
 
+const selectPageSizes = computed(() => {
+  const sizes = [...props.pageSizes]
+  const val = Number(localItemsPerPage.value)
+  if (val && !sizes.includes(val)) {
+    sizes.push(val)
+    sizes.sort((a, b) => a - b)
+  }
+  return sizes
+})
+
 const displayTotalItems = computed(() => {
   return props.serverSide ? props.totalItems : sortedData.value.length
 })
@@ -623,6 +640,8 @@ const startIndex = computed(() => (currentPage.value - 1) * localItemsPerPage.va
 const endIndex = computed(() => startIndex.value + localItemsPerPage.value)
 
 const paginatedData = computed(() => {
+  // For server-side processing, the server already returns only the current page's data
+  if (props.serverSide) return sortedData.value
   const start = startIndex.value
   const end = endIndex.value
   return sortedData.value.slice(start, end)
@@ -846,9 +865,21 @@ watch(() => props.data, () => {
   }
 })
 
+watch(() => props.currentPage, (newPage) => {
+  if (newPage !== currentPage.value) {
+    currentPage.value = newPage
+  }
+}, { immediate: true })
+
 watch(currentPage, (newPage) => {
   emit('page-change', newPage)
 })
+
+watch(() => props.itemsPerPage, (newLimit) => {
+  if (newLimit !== localItemsPerPage.value) {
+    localItemsPerPage.value = newLimit
+  }
+}, { immediate: true })
 
 watch(localItemsPerPage, () => {
   if (!props.serverSide) {

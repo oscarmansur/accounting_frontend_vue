@@ -43,5 +43,12 @@ export default {
         return api.post(`/accounting/entries/${entryId}/reverse`, null, {
             params: { reversal_date: reversalDate }
         })
+    },
+
+    /**
+     * Delete a draft journal entry.
+     */
+    delete(entryId) {
+        return api.delete(`/accounting/entries/${entryId}`)
     }
 }

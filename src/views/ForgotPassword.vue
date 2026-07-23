@@ -23,12 +23,10 @@ const handleForgotPassword = async (e) => {
   loading.value = true
   
   try {
-    await authStore.forgotPassword(email.value)
-    successMessage.value = t('auth.forgotPasswordSuccess') || 'If an account exists with this email, you will receive a password reset link.'
-    // Optional: clear email field or keep it
+    // Backend endpoint POST /auth/forgot-password is not implemented yet
+    error.value = t('auth.featureNotAvailable') || 'La recuperación de contraseña por correo electrónico no está configurada en este momento. Contacte a un administrador.'
   } catch (err) {
     console.error('Forgot password error:', err)
-    // For security, sometimes it's better not to reveal if email exists, but purely for UX/Dev:
     error.value = err.response?.data?.message || t('auth.forgotPasswordFailed')
   } finally {
     loading.value = false

@@ -192,6 +192,12 @@ const navigation = computed(() => {
       icon: ChartBarIcon,
       children: [
         { 
+          id: 'general-ledger', 
+          name: t('nav.generalLedger', 'Libro Mayor'), 
+          href: '/reports/ledger', 
+          routeName: 'general-ledger' 
+        },
+        { 
           id: 'balance-sheet', 
           name: t('nav.balanceSheet', 'Balance General'), 
           href: '/reports/balance-sheet', 
@@ -214,13 +220,7 @@ const navigation = computed(() => {
           name: t('nav.agingReport', 'Antigüedad de Saldos'), 
           href: '/reports/aging', 
           routeName: 'aging-report' 
-        },
-        { 
-          id: 'general-ledger', 
-          name: t('nav.generalLedger', 'Libro Mayor'), 
-          href: '/reports/ledger', 
-          routeName: 'general-ledger' 
-        }
+        }     
       ]
     }
   ];

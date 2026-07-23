@@ -19,9 +19,30 @@ export default {
     },
 
     /**
+     * Update an existing company.
+     */
+    update(companyId, data) {
+        return api.patch(`/companies/${companyId}`, data)
+    },
+
+    /**
+     * Soft-delete a company (sets is_active=False).
+     */
+    delete(companyId) {
+        return api.delete(`/companies/${companyId}`)
+    },
+
+    /**
      * Create a fiscal year with 12 monthly periods.
      */
     createFiscalYear(companyId, data) {
         return api.post(`/companies/${companyId}/fiscal-years`, data)
+    },
+
+    /**
+     * List all fiscal years for a company.
+     */
+    listFiscalYears(companyId) {
+        return api.get(`/companies/${companyId}/fiscal-years`)
     }
 }

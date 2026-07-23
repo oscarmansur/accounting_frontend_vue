@@ -18,19 +18,10 @@ const token = ref('')
 
 onMounted(async () => {
   token.value = route.query.token
-  if (!token.value) {
-    error.value = t('auth.invalidToken') || 'Invalid or missing verification token.'
-    loading.value = false
-    return
-  }
   
   try {
-    await authStore.verifyEmail(token.value)
-    successMessage.value = t('auth.emailVerifiedSuccess') || 'Email verified successfully! You can now login.'
-    // Redirect after delay
-    setTimeout(() => {
-        router.push({ name: 'login' })
-    }, 3000)
+    // Backend endpoint POST /auth/verify-email is not implemented yet
+    error.value = t('auth.featureNotAvailable') || 'La verificación de correo electrónico no está configurada en este momento.'
   } catch (err) {
     console.error('Verification error:', err)
     error.value = err.response?.data?.message || t('auth.emailVerificationFailed') || 'Email verification failed.'

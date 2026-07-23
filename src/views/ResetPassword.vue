@@ -39,16 +39,12 @@ const handleResetPassword = async (e) => {
   loading.value = true
   
   try {
-    await authStore.resetPassword(token.value, password.value)
-    successMessage.value = t('auth.passwordResetSuccess') || 'Password reset successfully! Redirecting...'
-    
-    setTimeout(() => {
-      router.push({ name: 'login' })
-    }, 2000)
-
+    // Backend endpoint POST /auth/reset-password is not implemented yet
+    error.value = t('auth.featureNotAvailable') || 'El restablecimiento de contraseña no está disponible en este momento.'
   } catch (err) {
     console.error('Reset password error:', err)
     error.value = err.response?.data?.message || t('auth.passwordResetFailed')
+  } finally {
     loading.value = false
   }
 }

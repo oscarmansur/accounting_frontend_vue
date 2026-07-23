@@ -47,9 +47,8 @@ export const useAuthStore = defineStore('auth', {
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                 })
 
-                // Backend returns { access_token, token_type }
-                const { access_token } = response.data
-                console.log('[Auth] Login OK, token received:', !!access_token)
+                // Backend returns { access_token, refresh_token, token_type }
+                const { access_token, refresh_token } = response.data
 
                 if (!access_token) {
                     throw new Error('No access_token in response')
@@ -57,12 +56,14 @@ export const useAuthStore = defineStore('auth', {
 
                 this.token = access_token
                 localStorage.setItem('auth_token', access_token)
+                if (refresh_token) {
+                    localStorage.setItem('refresh_token', refresh_token)
+                }
 
                 // Fetch user profile (non-blocking — login still succeeds if this fails)
                 try {
                     await this.fetchProfile()
                 } catch (profileError) {
-                    console.warn('[Auth] Profile fetch failed, using minimal user data:', profileError)
                     // Set minimal user data so the app can still work
                     this.user = { email, full_name: email, is_superuser: false, is_active: true }
                     localStorage.setItem('user', JSON.stringify(this.user))
@@ -70,7 +71,6 @@ export const useAuthStore = defineStore('auth', {
 
                 return { success: true, user: this.user }
             } catch (error) {
-                console.error('[Auth] Login failed:', error)
                 this.error = error.response?.data?.detail || 'Login failed'
                 throw error
             } finally {
@@ -83,7 +83,6 @@ export const useAuthStore = defineStore('auth', {
          */
         async fetchProfile() {
             const response = await api.get('/users/me')
-            console.log('[Auth] Profile fetched:', response.data)
             this.user = response.data
             localStorage.setItem('user', JSON.stringify(this.user))
         },
@@ -96,12 +95,10 @@ export const useAuthStore = defineStore('auth', {
             this.error = null
             try {
                 const response = await api.patch('/users/me', userData)
-                console.log('[Auth] Profile updated:', response.data)
                 this.user = response.data
                 localStorage.setItem('user', JSON.stringify(this.user))
                 return this.user
             } catch (error) {
-                console.error('[Auth] Profile update failed:', error)
                 this.error = error.response?.data?.detail || 'Profile update failed'
                 throw error
             } finally {
@@ -127,6 +124,7 @@ export const useAuthStore = defineStore('auth', {
             this.token = null
             this.user = null
             localStorage.removeItem('auth_token')
+            localStorage.removeItem('refresh_token')
             localStorage.removeItem('user')
             localStorage.removeItem('current_tenant_id')
             localStorage.removeItem('current_company_id')
@@ -167,8 +165,28 @@ export const useAuthStore = defineStore('auth', {
             return userLevel >= requiredLevel
         },
 
-        refreshToken() {
-            console.log('Token refresh not implemented')
+        async refreshToken() {
+            const storedRefreshToken = localStorage.getItem('refresh_token')
+            if (!storedRefreshToken) {
+                this.logout()
+                throw new Error('No refresh token available')
+            }
+
+            try {
+                const response = await api.post('/auth/refresh', {
+                    refresh_token: storedRefreshToken
+                })
+                const { access_token, refresh_token: newRefreshToken } = response.data
+                this.token = access_token
+                localStorage.setItem('auth_token', access_token)
+                if (newRefreshToken) {
+                    localStorage.setItem('refresh_token', newRefreshToken)
+                }
+                return access_token
+            } catch (err) {
+                this.logout()
+                throw err
+            }
         },
 
         setWelcomeAnimation(value) {
